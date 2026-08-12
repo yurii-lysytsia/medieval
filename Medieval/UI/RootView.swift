@@ -37,6 +37,9 @@ struct GameScreen: View {
                     game.endTurn()
                 }
                 .keyboardShortcut(.return, modifiers: [])
+                Button("Огляд мапи") {
+                    game.resetMapCamera()
+                }
                 Button("До меню", action: onShowMenu)
             }
             .padding()
@@ -49,6 +52,7 @@ struct GameScreen: View {
                     map: game.content.scenario.map,
                     world: game.content.scenario.world,
                     selectedHexID: game.selectedHexID,
+                    cameraResetToken: game.cameraResetToken,
                     onSelectHex: game.selectHex
                 )
                 .accessibilityLabel("Ігрове поле")

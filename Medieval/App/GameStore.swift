@@ -7,6 +7,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var state: GameState
     @Published private(set) var content: GameContentConfiguration
     @Published private(set) var selectedHexID: HexID?
+    @Published private(set) var cameraResetToken = 0
 
     init(
         state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
@@ -27,6 +28,10 @@ final class GameStore: ObservableObject {
 
     func selectHex(_ id: HexID?) {
         selectedHexID = id
+    }
+
+    func resetMapCamera() {
+        cameraResetToken += 1
     }
 
     func startNewGame() {
