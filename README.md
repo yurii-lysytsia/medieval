@@ -46,3 +46,6 @@ To automatically apply the repository formatting rules:
 ```sh
 swiftformat Medieval Tests Package.swift
 ```
+
+The supported macOS range and the compatibility-build command are documented in
+[Docs/macOS-support.md](Docs/macOS-support.md).
