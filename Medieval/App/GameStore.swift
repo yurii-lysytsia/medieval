@@ -10,7 +10,12 @@ final class GameStore: ObservableObject {
     }
 
     func send(_ action: GameAction) {
-        state = GameRules.applying(action, to: state)
+        guard case let .success(next) = GameRules.apply(action, to: state) else { return }
+        state = next
+    }
+
+    func endTurn() {
+        send(.endTurn(playerID: state.activePlayer.id))
     }
 
     func startNewGame() {

@@ -2,7 +2,7 @@ import MedievalDomain
 import SpriteKit
 
 final class GameScene: SKScene {
-    var onAction: ((GameAction) -> Void)?
+    var onEndTurn: (() -> Void)?
 
     private let titleLabel = SKLabelNode(fontNamed: "Palatino-Bold")
     private let turnLabel = SKLabelNode(fontNamed: "SF Pro Rounded")
@@ -35,7 +35,7 @@ final class GameScene: SKScene {
     }
 
     override func mouseUp(with event: NSEvent) {
-        onAction?(.endTurn)
+        onEndTurn?()
     }
 
     private func drawBoard() {

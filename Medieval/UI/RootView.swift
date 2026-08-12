@@ -24,7 +24,7 @@ struct RootView: View {
                 }
                 Spacer()
                 Button("Завершити хід") {
-                    coordinator.game.send(.endTurn)
+                    coordinator.game.endTurn()
                 }
                 .keyboardShortcut(.return, modifiers: [])
                 Button("До меню") {
@@ -35,7 +35,7 @@ struct RootView: View {
 
             Divider()
 
-            GameView(state: coordinator.game.state, onAction: coordinator.game.send)
+            GameView(state: coordinator.game.state, onEndTurn: coordinator.game.endTurn)
                 .accessibilityLabel("Ігрове поле")
         }
     }
