@@ -4,20 +4,23 @@ import SwiftUI
 
 struct GameView: NSViewRepresentable {
     let state: GameState
-    let onEndTurn: () -> Void
+    let map: StaticHexMap
+    let world: WorldState
+    let selectedHexID: HexID?
+    let onSelectHex: (HexID) -> Void
 
     func makeNSView(context _: Context) -> SKView {
         let view = SKView()
         let scene = GameScene(size: CGSize(width: 960, height: 640))
-        scene.onEndTurn = onEndTurn
-        scene.render(state)
+        scene.onSelectHex = onSelectHex
+        scene.render(state, map: map, world: world, selectedHexID: selectedHexID)
         view.presentScene(scene)
         return view
     }
 
     func updateNSView(_ view: SKView, context _: Context) {
         guard let scene = view.scene as? GameScene else { return }
-        scene.onEndTurn = onEndTurn
-        scene.render(state)
+        scene.onSelectHex = onSelectHex
+        scene.render(state, map: map, world: world, selectedHexID: selectedHexID)
     }
 }

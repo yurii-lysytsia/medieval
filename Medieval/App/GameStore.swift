@@ -6,6 +6,7 @@ import MedievalDomain
 final class GameStore: ObservableObject {
     @Published private(set) var state: GameState
     @Published private(set) var content: GameContentConfiguration
+    @Published private(set) var selectedHexID: HexID?
 
     init(
         state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
@@ -24,8 +25,13 @@ final class GameStore: ObservableObject {
         send(.endTurn(playerID: state.activePlayer.id))
     }
 
+    func selectHex(_ id: HexID?) {
+        selectedHexID = id
+    }
+
     func startNewGame() {
         content = Self.loadBundledContent()
+        selectedHexID = nil
         state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName) })
     }
 
