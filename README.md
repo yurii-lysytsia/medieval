@@ -15,6 +15,14 @@ only through the module's `public` surface.
 synchronized file group. New rule files dropped into that folder join the
 package automatically and need no project changes.
 
+## Structure
+
+- `Medieval/App` — application entry point and navigation
+- `Medieval/Domain` — deterministic game state and rules, without UI dependencies
+- `Medieval/Persistence` — save-storage boundary
+- `Medieval/Scenes` — SpriteKit board scenes
+- `Medieval/UI` — SwiftUI views and SpriteKit bridge
+
 ## Requirements
 
 - macOS 14 (Sonoma) or newer

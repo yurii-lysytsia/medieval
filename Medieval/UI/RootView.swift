@@ -1,10 +1,19 @@
 import MedievalDomain
 import SwiftUI
 
-struct ContentView: View {
-    @ObservedObject var game: GameStore
+struct RootView: View {
+    @ObservedObject var coordinator: AppCoordinator
 
     var body: some View {
+        switch coordinator.route {
+        case .menu:
+            MainMenuView(onNewGame: coordinator.startNewGame)
+        case .game:
+            gameScreen
+        }
+    }
+
+    private var gameScreen: some View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -15,15 +24,18 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button("Завершити хід") {
-                    game.send(.endTurn)
+                    coordinator.game.send(.endTurn)
                 }
                 .keyboardShortcut(.return, modifiers: [])
+                Button("До меню") {
+                    coordinator.showMenu()
+                }
             }
             .padding()
 
             Divider()
 
-            GameView(state: game.state, onAction: game.send)
+            GameView(state: coordinator.game.state, onAction: coordinator.game.send)
                 .accessibilityLabel("Ігрове поле")
         }
     }
