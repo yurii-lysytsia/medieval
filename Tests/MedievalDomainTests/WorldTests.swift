@@ -10,8 +10,8 @@ struct WorldTests {
                 WorldPlayer(id: "union", displayName: "Union"),
             ],
             hexes: [
-                Hex(id: "h-0-0", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true),
-                Hex(id: "h-1-0", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "forest", isPassable: true),
+                Hex(id: "h-0-0", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"),
+                Hex(id: "h-1-0", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "forest"),
             ],
             riverBoundaries: [
                 RiverBoundary(id: "river-0", boundary: HexBoundary(firstHexID: "h-0-0", secondHexID: "h-1-0")),

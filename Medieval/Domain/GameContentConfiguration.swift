@@ -117,6 +117,21 @@ public struct GameContentConfiguration: Codable, Equatable, Sendable {
     }
 }
 
+public extension GameContentConfiguration {
+    /// The terrain a hex sits on, or `nil` for a dangling reference. Validated
+    /// content never dangles — `GameContentValidator` rejects it first.
+    func terrainDefinition(for hex: Hex) -> TerrainDefinition? {
+        terrain.first { $0.id == hex.terrainID }
+    }
+
+    /// Whether units may occupy this hex. Unknown terrain is impassable, so a
+    /// caller that skipped validation fails closed instead of letting armies
+    /// walk onto tiles nobody defined.
+    func isPassable(_ hex: Hex) -> Bool {
+        terrainDefinition(for: hex)?.isPassable ?? false
+    }
+}
+
 public enum GameContentLoadingError: Error, Equatable, LocalizedError, Sendable {
     case missingResource(String)
     case unreadableData(String)
@@ -138,11 +153,14 @@ public enum GameContentLoader {
     public static let mvpResourceName = "MVPConfiguration"
 
     public static func decode(_ data: Data) throws -> GameContentConfiguration {
+        let configuration: GameContentConfiguration
         do {
-            return try JSONDecoder().decode(GameContentConfiguration.self, from: data)
+            configuration = try JSONDecoder().decode(GameContentConfiguration.self, from: data)
         } catch {
             throw GameContentLoadingError.invalidJSON(error.localizedDescription)
         }
+        try GameContentValidator.validate(configuration)
+        return configuration
     }
 
     /// Loads the bundled MVP configuration.

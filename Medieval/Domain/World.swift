@@ -54,17 +54,21 @@ public struct HexCoordinate: Codable, Equatable, Hashable, Sendable {
     }
 }
 
+/// A single map tile.
+///
+/// Passability is not stored here. It is a property of the hex's terrain, and
+/// keeping a copy on the hex meant the two could disagree — a contradiction
+/// content validation had to police rather than one the model made impossible.
+/// Ask the terrain definition instead: `configuration.terrain(for: hex)`.
 public struct Hex: Codable, Equatable, Sendable, Identifiable {
     public let id: HexID
     public let coordinate: HexCoordinate
     public let terrainID: TerrainID
-    public let isPassable: Bool
 
-    public init(id: HexID, coordinate: HexCoordinate, terrainID: TerrainID, isPassable: Bool) {
+    public init(id: HexID, coordinate: HexCoordinate, terrainID: TerrainID) {
         self.id = id
         self.coordinate = coordinate
         self.terrainID = terrainID
-        self.isPassable = isPassable
     }
 }
 
