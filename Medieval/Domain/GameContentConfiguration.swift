@@ -84,12 +84,14 @@ public struct ScenarioConfiguration: Codable, Equatable, Sendable, Identifiable 
     public let id: String
     public let displayName: String
     public let startingGold: Int
+    public let map: StaticHexMap
     public let world: WorldState
 
-    public init(id: String, displayName: String, startingGold: Int, world: WorldState) {
+    public init(id: String, displayName: String, startingGold: Int, map: StaticHexMap, world: WorldState) {
         self.id = id
         self.displayName = displayName
         self.startingGold = startingGold
+        self.map = map
         self.world = world
     }
 }

@@ -25,6 +25,13 @@ struct GameContentConfigurationTests {
             "id": "test",
             "displayName": "Test",
             "startingGold": 999,
+            "map": {
+              "id": "map",
+              "displayName": "Map",
+              "bounds": { "minimumQ": 0, "maximumQ": 0, "minimumR": 0, "maximumR": 0 },
+              "hexes": [],
+              "neighborhoods": []
+            },
             "world": {
               "players": [
                 { "id": "one", "displayName": "One" },

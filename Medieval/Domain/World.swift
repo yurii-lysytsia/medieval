@@ -72,6 +72,49 @@ public struct Hex: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+public struct HexMapBounds: Codable, Equatable, Sendable {
+    public let minimumQ: Int
+    public let maximumQ: Int
+    public let minimumR: Int
+    public let maximumR: Int
+
+    public init(minimumQ: Int, maximumQ: Int, minimumR: Int, maximumR: Int) {
+        self.minimumQ = minimumQ
+        self.maximumQ = maximumQ
+        self.minimumR = minimumR
+        self.maximumR = maximumR
+    }
+}
+
+public struct HexNeighborhood: Codable, Equatable, Sendable, Identifiable {
+    public let hexID: HexID
+    public let neighborHexIDs: [HexID]
+
+    public var id: HexID { hexID }
+
+    public init(hexID: HexID, neighborHexIDs: [HexID]) {
+        self.hexID = hexID
+        self.neighborHexIDs = neighborHexIDs
+    }
+}
+
+/// A replaceable static map dataset, described entirely with axial coordinates.
+public struct StaticHexMap: Codable, Equatable, Sendable, Identifiable {
+    public let id: String
+    public let displayName: String
+    public let bounds: HexMapBounds
+    public let hexes: [Hex]
+    public let neighborhoods: [HexNeighborhood]
+
+    public init(id: String, displayName: String, bounds: HexMapBounds, hexes: [Hex], neighborhoods: [HexNeighborhood]) {
+        self.id = id
+        self.displayName = displayName
+        self.bounds = bounds
+        self.hexes = hexes
+        self.neighborhoods = neighborhoods
+    }
+}
+
 /// The shared edge between two hexes.
 ///
 /// An edge has no direction, so the two hex IDs are stored in a canonical

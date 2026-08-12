@@ -149,6 +149,82 @@
     "id": "mvp-duel",
     "displayName": "Crown and Union",
     "startingGold": 120,
+    "map": {
+      "id": "europe-mvp",
+      "displayName": "Europe — MVP",
+      "bounds": {
+        "minimumQ": 0,
+        "maximumQ": 1,
+        "minimumR": 0,
+        "maximumR": 1
+      },
+      "hexes": [
+        {
+          "id": "h-0-0",
+          "coordinate": {
+            "q": 0,
+            "r": 0
+          },
+          "terrainID": "plains"
+        },
+        {
+          "id": "h-1-0",
+          "coordinate": {
+            "q": 1,
+            "r": 0
+          },
+          "terrainID": "forest"
+        },
+        {
+          "id": "h-0-1",
+          "coordinate": {
+            "q": 0,
+            "r": 1
+          },
+          "terrainID": "hills"
+        },
+        {
+          "id": "h-1-1",
+          "coordinate": {
+            "q": 1,
+            "r": 1
+          },
+          "terrainID": "mountains"
+        }
+      ],
+      "neighborhoods": [
+        {
+          "hexID": "h-0-0",
+          "neighborHexIDs": [
+            "h-1-0",
+            "h-0-1"
+          ]
+        },
+        {
+          "hexID": "h-1-0",
+          "neighborHexIDs": [
+            "h-0-0",
+            "h-0-1",
+            "h-1-1"
+          ]
+        },
+        {
+          "hexID": "h-0-1",
+          "neighborHexIDs": [
+            "h-0-0",
+            "h-1-0",
+            "h-1-1"
+          ]
+        },
+        {
+          "hexID": "h-1-1",
+          "neighborHexIDs": [
+            "h-1-0",
+            "h-0-1"
+          ]
+        }
+      ]
+    },
     "world": {
       "players": [
         {

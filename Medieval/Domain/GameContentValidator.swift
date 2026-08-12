@@ -5,6 +5,9 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
     case missingReference(entity: String, id: String, reference: String)
     case invalidNumber(field: String, value: Int, minimum: Int)
     case impassablePlacement(entity: String, hexID: HexID)
+    case coordinateOutOfBounds(hexID: HexID, axis: String, value: Int, minimum: Int, maximum: Int)
+    case contradictoryHex(hexID: HexID)
+    case asymmetricNeighborhood(hexID: HexID, neighborHexID: HexID)
 
     public var errorDescription: String? {
         switch self {
@@ -16,6 +19,12 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
             "\(field) must be at least \(minimum), but is \(value)."
         case let .impassablePlacement(entity, hexID):
             "\(entity) cannot be placed on impassable hex \"\(hexID.rawValue)\"."
+        case let .coordinateOutOfBounds(hexID, axis, value, minimum, maximum):
+            "Map hex \"\(hexID.rawValue)\" has \(axis) = \(value), outside the map bounds \(minimum)...\(maximum)."
+        case let .contradictoryHex(hexID):
+            "Hex \"\(hexID.rawValue)\" is described differently by the map and the world."
+        case let .asymmetricNeighborhood(hexID, neighborHexID):
+            "Hex \"\(hexID.rawValue)\" lists \"\(neighborHexID.rawValue)\" as a neighbour, but not the other way round."
         }
     }
 }
@@ -33,6 +42,9 @@ public enum GameContentValidator {
         try validateUnique(configuration.units.map(\.id.rawValue), entity: "unit")
         try validateUnique(configuration.cityLevels.map(\.id.rawValue), entity: "city level")
         try validateUnique(configuration.buildings.map(\.id.rawValue), entity: "building type")
+        try validateUnique(configuration.scenario.map.hexes.map(\.id.rawValue), entity: "map hex")
+        try validateUnique(configuration.scenario.map.hexes.map { "\($0.coordinate.q),\($0.coordinate.r)" }, entity: "map coordinate")
+        try validateUnique(configuration.scenario.map.neighborhoods.map(\.hexID.rawValue), entity: "map neighborhood")
 
         let world = configuration.scenario.world
         try validateUnique(world.players.map(\.id.rawValue), entity: "player")
@@ -85,6 +97,63 @@ public enum GameContentValidator {
         let playerIDs = Set(world.players.map(\.id))
         let hexByID = Dictionary(world.hexes.map { ($0.id, $0) }) { first, _ in first }
         let cityIDs = Set(world.cities.map(\.id))
+        let map = configuration.scenario.map
+        let mapHexIDs = Set(map.hexes.map(\.id))
+
+        for hex in map.hexes {
+            if !(map.bounds.minimumQ ... map.bounds.maximumQ).contains(hex.coordinate.q) {
+                throw GameContentValidationError.coordinateOutOfBounds(
+                    hexID: hex.id, axis: "q", value: hex.coordinate.q,
+                    minimum: map.bounds.minimumQ, maximum: map.bounds.maximumQ
+                )
+            }
+            if !(map.bounds.minimumR ... map.bounds.maximumR).contains(hex.coordinate.r) {
+                throw GameContentValidationError.coordinateOutOfBounds(
+                    hexID: hex.id, axis: "r", value: hex.coordinate.r,
+                    minimum: map.bounds.minimumR, maximum: map.bounds.maximumR
+                )
+            }
+            guard terrainByID[hex.terrainID] != nil else {
+                throw GameContentValidationError.missingReference(entity: "map hex", id: hex.id.rawValue, reference: "terrain \"\(hex.terrainID.rawValue)\"")
+            }
+        }
+
+        // The rules read terrain from world.hexes while the map and its
+        // inspectors read map.hexes. The two describe the same board, so a
+        // disagreement would render one terrain and resolve combat on another.
+        for mapHex in map.hexes {
+            guard let worldHex = hexByID[mapHex.id] else {
+                throw GameContentValidationError.missingReference(entity: "map hex", id: mapHex.id.rawValue, reference: "matching world hex")
+            }
+            guard worldHex == mapHex else {
+                throw GameContentValidationError.contradictoryHex(hexID: mapHex.id)
+            }
+        }
+        for worldHex in world.hexes where !mapHexIDs.contains(worldHex.id) {
+            throw GameContentValidationError.missingReference(entity: "world hex", id: worldHex.id.rawValue, reference: "matching map hex")
+        }
+
+        let neighborhoodHexIDs = Set(map.neighborhoods.map(\.hexID))
+        let neighborsByHexID = Dictionary(map.neighborhoods.map { ($0.hexID, Set($0.neighborHexIDs)) }) { first, _ in first }
+
+        for neighborhood in map.neighborhoods {
+            guard mapHexIDs.contains(neighborhood.hexID) else {
+                throw GameContentValidationError.missingReference(entity: "map neighborhood", id: neighborhood.hexID.rawValue, reference: "hex")
+            }
+            for neighborID in neighborhood.neighborHexIDs {
+                guard mapHexIDs.contains(neighborID) else {
+                    throw GameContentValidationError.missingReference(entity: "map neighborhood", id: neighborhood.hexID.rawValue, reference: "neighbor hex \"\(neighborID.rawValue)\"")
+                }
+                // Adjacency is mutual. A one-sided entry would let an army walk
+                // one way down a corridor it cannot walk back.
+                guard neighborsByHexID[neighborID]?.contains(neighborhood.hexID) == true else {
+                    throw GameContentValidationError.asymmetricNeighborhood(hexID: neighborhood.hexID, neighborHexID: neighborID)
+                }
+            }
+        }
+        for hexID in mapHexIDs where !neighborhoodHexIDs.contains(hexID) {
+            throw GameContentValidationError.missingReference(entity: "map", id: map.id, reference: "neighborhood for hex \"\(hexID.rawValue)\"")
+        }
 
         for hex in world.hexes where terrainByID[hex.terrainID] == nil {
             throw GameContentValidationError.missingReference(

@@ -63,7 +63,7 @@ struct GameContentValidatorTests {
 
         let error = try validationError(for: configuration)
 
-        #expect(error == .missingReference(entity: "hex", id: "void", reference: "terrain \"swamp\""))
+        #expect(error == .missingReference(entity: "map hex", id: "void", reference: "terrain \"swamp\""))
     }
 
     private func validationError(for configuration: GameContentConfiguration) throws -> GameContentValidationError {
@@ -77,11 +77,95 @@ struct GameContentValidatorTests {
         }
     }
 
+    @Test func mapAndWorldDisagreeingAboutAHexIsRejectedWhileLoading() throws {
+        // Same hex ID, different terrain on each side of the configuration.
+        let worldHex = Hex(id: "land", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "ocean")
+        var configuration = fixture()
+        configuration = GameContentConfiguration(
+            terrain: configuration.terrain,
+            units: configuration.units,
+            cityLevels: configuration.cityLevels,
+            buildings: configuration.buildings,
+            scenario: ScenarioConfiguration(
+                id: configuration.scenario.id,
+                displayName: configuration.scenario.displayName,
+                startingGold: configuration.scenario.startingGold,
+                map: configuration.scenario.map,
+                world: WorldState(players: configuration.scenario.world.players, hexes: [worldHex])
+            )
+        )
+
+        let error = try validationError(for: configuration)
+
+        #expect(error == .contradictoryHex(hexID: "land"))
+    }
+
+    @Test func hexOutsideTheMapBoundsIsRejectedWhileLoading() throws {
+        let outside = Hex(id: "land", coordinate: HexCoordinate(q: 9, r: 0), terrainID: "plains")
+        var configuration = fixture(world: world(hexes: [outside]))
+        configuration = GameContentConfiguration(
+            terrain: configuration.terrain,
+            units: configuration.units,
+            cityLevels: configuration.cityLevels,
+            buildings: configuration.buildings,
+            scenario: ScenarioConfiguration(
+                id: configuration.scenario.id,
+                displayName: configuration.scenario.displayName,
+                startingGold: configuration.scenario.startingGold,
+                map: StaticHexMap(
+                    id: "map",
+                    displayName: "Map",
+                    bounds: HexMapBounds(minimumQ: 0, maximumQ: 1, minimumR: 0, maximumR: 1),
+                    hexes: [outside],
+                    neighborhoods: [HexNeighborhood(hexID: "land", neighborHexIDs: [])]
+                ),
+                world: configuration.scenario.world
+            )
+        )
+
+        let error = try validationError(for: configuration)
+
+        #expect(error == .coordinateOutOfBounds(hexID: "land", axis: "q", value: 9, minimum: 0, maximum: 1))
+    }
+
+    @Test func oneSidedNeighbourhoodIsRejectedWhileLoading() throws {
+        let first = Hex(id: "a", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")
+        let second = Hex(id: "b", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains")
+        var configuration = fixture(world: world(hexes: [first, second]))
+        configuration = GameContentConfiguration(
+            terrain: configuration.terrain,
+            units: configuration.units,
+            cityLevels: configuration.cityLevels,
+            buildings: configuration.buildings,
+            scenario: ScenarioConfiguration(
+                id: configuration.scenario.id,
+                displayName: configuration.scenario.displayName,
+                startingGold: configuration.scenario.startingGold,
+                map: StaticHexMap(
+                    id: "map",
+                    displayName: "Map",
+                    bounds: HexMapBounds(minimumQ: 0, maximumQ: 1, minimumR: 0, maximumR: 0),
+                    hexes: [first, second],
+                    neighborhoods: [
+                        HexNeighborhood(hexID: "a", neighborHexIDs: ["b"]),
+                        HexNeighborhood(hexID: "b", neighborHexIDs: []),
+                    ]
+                ),
+                world: configuration.scenario.world
+            )
+        )
+
+        let error = try validationError(for: configuration)
+
+        #expect(error == .asymmetricNeighborhood(hexID: "a", neighborHexID: "b"))
+    }
+
     private func fixture(
         units: [UnitDefinition]? = nil,
         world: WorldState? = nil
     ) -> GameContentConfiguration {
-        GameContentConfiguration(
+        let resolvedWorld = world ?? self.world()
+        return GameContentConfiguration(
             terrain: [
                 TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, incomeModifier: 0, isPassable: true),
                 TerrainDefinition(id: "ocean", displayName: "Ocean", movementCost: 0, incomeModifier: 0, isPassable: false),
@@ -89,7 +173,34 @@ struct GameContentValidatorTests {
             units: units ?? [unit()],
             cityLevels: [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1)],
             buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, incomeModifier: 0, defenseModifier: 0)],
-            scenario: ScenarioConfiguration(id: "test", displayName: "Test", startingGold: 0, world: world ?? self.world())
+            scenario: ScenarioConfiguration(
+                id: "test",
+                displayName: "Test",
+                startingGold: 0,
+                map: map(mirroring: resolvedWorld.hexes),
+                world: resolvedWorld
+            )
+        )
+    }
+
+    /// The map and the world describe the same board, so fixtures derive one
+    /// from the other instead of keeping a second hand-written list in step.
+    /// Every hex neighbours every other, which is symmetric by construction.
+    private func map(mirroring hexes: [Hex]) -> StaticHexMap {
+        let ids = hexes.map(\.id)
+        return StaticHexMap(
+            id: "map",
+            displayName: "Map",
+            bounds: HexMapBounds(
+                minimumQ: hexes.map(\.coordinate.q).min() ?? 0,
+                maximumQ: hexes.map(\.coordinate.q).max() ?? 0,
+                minimumR: hexes.map(\.coordinate.r).min() ?? 0,
+                maximumR: hexes.map(\.coordinate.r).max() ?? 0
+            ),
+            hexes: hexes,
+            neighborhoods: hexes.map { hex in
+                HexNeighborhood(hexID: hex.id, neighborHexIDs: ids.filter { $0 != hex.id })
+            }
         )
     }
 
