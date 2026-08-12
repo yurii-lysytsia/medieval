@@ -12,7 +12,7 @@ extension GameAction: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(Kind.self, forKey: .kind) {
         case .endTurn:
-            self = .endTurn(playerID: try container.decode(UUID.self, forKey: .playerID))
+            self = try .endTurn(playerID: container.decode(UUID.self, forKey: .playerID))
         }
     }
 

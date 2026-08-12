@@ -5,10 +5,10 @@ let package = Package(
     name: "MedievalDomain",
     platforms: [.macOS(.v14)],
     products: [
-        .library(name: "MedievalDomain", targets: ["MedievalDomain"])
+        .library(name: "MedievalDomain", targets: ["MedievalDomain"]),
     ],
     targets: [
         .target(name: "MedievalDomain", path: "Medieval/Domain"),
-        .testTarget(name: "MedievalDomainTests", dependencies: ["MedievalDomain"])
+        .testTarget(name: "MedievalDomainTests", dependencies: ["MedievalDomain"]),
     ]
 )

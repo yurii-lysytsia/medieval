@@ -7,7 +7,7 @@ final class GameScene: SKScene {
     private let titleLabel = SKLabelNode(fontNamed: "Palatino-Bold")
     private let turnLabel = SKLabelNode(fontNamed: "SF Pro Rounded")
 
-    override func didMove(to view: SKView) {
+    override func didMove(to _: SKView) {
         scaleMode = .resizeFill
         backgroundColor = .init(red: 0.07, green: 0.12, blue: 0.10, alpha: 1)
 
@@ -24,7 +24,7 @@ final class GameScene: SKScene {
         drawBoard()
     }
 
-    override func didChangeSize(_ oldSize: CGSize) {
+    override func didChangeSize(_: CGSize) {
         titleLabel.position = CGPoint(x: size.width / 2, y: size.height - 76)
         turnLabel.position = CGPoint(x: size.width / 2, y: size.height - 118)
     }
@@ -34,7 +34,7 @@ final class GameScene: SKScene {
         turnLabel.text = "Хід \(state.turn) · \(state.activePlayer.displayName)"
     }
 
-    override func mouseUp(with event: NSEvent) {
+    override func mouseUp(with _: NSEvent) {
         onEndTurn?()
     }
 

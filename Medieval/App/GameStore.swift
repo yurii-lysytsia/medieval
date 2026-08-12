@@ -28,7 +28,7 @@ final class GameStore: ObservableObject {
     nonisolated static func newMatch() -> GameState {
         GameState(players: [
             Player(displayName: "Корона"),
-            Player(displayName: "Союз")
+            Player(displayName: "Союз"),
         ])
     }
 }

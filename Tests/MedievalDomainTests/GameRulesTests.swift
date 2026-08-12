@@ -1,12 +1,12 @@
 import Foundation
-import Testing
 @testable import MedievalDomain
+import Testing
 
 struct GameRulesTests {
     private let crown = Player(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, displayName: "Crown")
     private let union = Player(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!, displayName: "Union")
 
-    @Test func endingTurnMovesToNextPlayer() throws {
+    @Test func reducerMovesToNextPlayerForValidAction() throws {
         let initial = GameState(players: [crown, union], seed: 42)
 
         let next = try GameRules.apply(.endTurn(playerID: crown.id), to: initial).get()

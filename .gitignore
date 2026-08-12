@@ -63,5 +63,6 @@ fastlane/test_output
 # Xcode user and build artifacts
 DerivedData/
 build/
+.build/
 *.xcuserstate
 xcuserdata/

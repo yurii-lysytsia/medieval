@@ -1,0 +1,10 @@
+--swiftversion 6.0
+--indent 4
+--linebreaks lf
+--header ignore
+--self remove
+
+# hoistTry rewrites `#expect(try foo())` into `#expecttry (foo())`, which does
+# not compile. Swift Testing assertions are macros, and the rule moves the try
+# past the macro name.
+--disable hoistTry

@@ -56,7 +56,7 @@ public struct GameState: Codable, Equatable, Sendable {
             )
         }
 
-        self.seed = try container.decode(UInt64.self, forKey: .seed)
+        seed = try container.decode(UInt64.self, forKey: .seed)
         self.players = players
         self.activePlayerIndex = activePlayerIndex
         self.turn = turn

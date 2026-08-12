@@ -27,13 +27,22 @@ package automatically and need no project changes.
 
 - macOS 14 (Sonoma) or newer
 - Xcode 16 or newer
+- [SwiftFormat](https://github.com/nicklockwood/SwiftFormat), for the local
+  checks: `brew install swiftformat`
 
 ## Development
 
 Open `Medieval.xcodeproj` in Xcode and run the `Medieval` scheme.
 
-Run domain-rule tests from the repository root:
+Run all local checks—formatting, domain-rule tests, and an unsigned macOS Debug
+build—from the repository root:
 
 ```sh
-swift test
+./Scripts/verify.sh
+```
+
+To automatically apply the repository formatting rules:
+
+```sh
+swiftformat Medieval Tests Package.swift
 ```
