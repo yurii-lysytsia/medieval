@@ -1,12 +1,18 @@
 import Combine
+import Foundation
 import MedievalDomain
 
 @MainActor
 final class GameStore: ObservableObject {
     @Published private(set) var state: GameState
+    @Published private(set) var content: GameContentConfiguration
 
-    init(state: GameState = GameStore.newMatch()) {
+    init(
+        state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
+        content: GameContentConfiguration? = nil
+    ) {
         self.state = state
+        self.content = content ?? Self.loadBundledContent()
     }
 
     func send(_ action: GameAction) {
@@ -19,16 +25,15 @@ final class GameStore: ObservableObject {
     }
 
     func startNewGame() {
-        state = Self.newMatch()
+        content = Self.loadBundledContent()
+        state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName) })
     }
 
-    /// The roster every MVP match starts from. A function rather than a stored
-    /// constant so each new match gets fresh player identities; `nonisolated`
-    /// so it can also be evaluated as `init`'s default argument.
-    nonisolated static func newMatch() -> GameState {
-        GameState(players: [
-            Player(displayName: "Корона"),
-            Player(displayName: "Союз"),
-        ])
+    private static func loadBundledContent() -> GameContentConfiguration {
+        do {
+            return try GameContentLoader.loadMVP()
+        } catch {
+            fatalError(error.localizedDescription)
+        }
     }
 }

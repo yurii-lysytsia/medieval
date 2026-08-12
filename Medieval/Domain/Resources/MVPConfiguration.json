@@ -1,0 +1,62 @@
+{
+  "terrain" : [
+    { "id" : "plains", "displayName" : "Plains", "movementCost" : 1, "incomeModifier" : 2, "isPassable" : true },
+    { "id" : "forest", "displayName" : "Forest", "movementCost" : 2, "incomeModifier" : 1, "isPassable" : true },
+    { "id" : "hills", "displayName" : "Hills", "movementCost" : 2, "incomeModifier" : 0, "isPassable" : true },
+    { "id" : "mountains", "displayName" : "Mountains", "movementCost" : 3, "incomeModifier" : -1, "isPassable" : true },
+    { "id" : "swamp", "displayName" : "Swamp", "movementCost" : 3, "incomeModifier" : -1, "isPassable" : true },
+    { "id" : "desert", "displayName" : "Desert", "movementCost" : 2, "incomeModifier" : -2, "isPassable" : true },
+    { "id" : "coast", "displayName" : "Coast", "movementCost" : 1, "incomeModifier" : 1, "isPassable" : true },
+    { "id" : "ocean", "displayName" : "Ocean", "movementCost" : 0, "incomeModifier" : 0, "isPassable" : false }
+  ],
+  "units" : [
+    { "id" : "spearmen", "displayName" : "Spearmen", "recruitmentCost" : 25, "upkeep" : 1, "attack" : 2, "defense" : 3, "movement" : 2 },
+    { "id" : "archers", "displayName" : "Archers", "recruitmentCost" : 35, "upkeep" : 2, "attack" : 3, "defense" : 2, "movement" : 2 },
+    { "id" : "cavalry", "displayName" : "Cavalry", "recruitmentCost" : 60, "upkeep" : 3, "attack" : 4, "defense" : 3, "movement" : 4 },
+    { "id" : "trebuchet", "displayName" : "Trebuchet", "recruitmentCost" : 90, "upkeep" : 4, "attack" : 5, "defense" : 1, "movement" : 1 }
+  ],
+  "cityLevels" : [
+    { "id" : "village", "displayName" : "Village", "baseIncome" : 4, "buildingSlots" : 1 },
+    { "id" : "town", "displayName" : "Town", "baseIncome" : 8, "buildingSlots" : 2 },
+    { "id" : "city", "displayName" : "City", "baseIncome" : 14, "buildingSlots" : 4 }
+  ],
+  "buildings" : [
+    { "id" : "market", "displayName" : "Market", "constructionCost" : 60, "incomeModifier" : 3, "defenseModifier" : 0 },
+    { "id" : "barracks", "displayName" : "Barracks", "constructionCost" : 75, "incomeModifier" : 0, "defenseModifier" : 1 },
+    { "id" : "walls", "displayName" : "Walls", "constructionCost" : 100, "incomeModifier" : 0, "defenseModifier" : 4 },
+    { "id" : "workshop", "displayName" : "Workshop", "constructionCost" : 80, "incomeModifier" : 2, "defenseModifier" : 0 }
+  ],
+  "scenario" : {
+    "id" : "mvp-duel",
+    "displayName" : "Crown and Union",
+    "startingGold" : 120,
+    "world" : {
+      "players" : [
+        { "id" : "crown", "displayName" : "Crown" },
+        { "id" : "union", "displayName" : "Union" }
+      ],
+      "hexes" : [
+        { "id" : "h-0-0", "coordinate" : { "q" : 0, "r" : 0 }, "terrainID" : "plains", "isPassable" : true },
+        { "id" : "h-1-0", "coordinate" : { "q" : 1, "r" : 0 }, "terrainID" : "forest", "isPassable" : true },
+        { "id" : "h-0-1", "coordinate" : { "q" : 0, "r" : 1 }, "terrainID" : "hills", "isPassable" : true },
+        { "id" : "h-1-1", "coordinate" : { "q" : 1, "r" : 1 }, "terrainID" : "mountains", "isPassable" : true }
+      ],
+      "riverBoundaries" : [
+        { "id" : "river-0", "boundary" : { "firstHexID" : "h-0-0", "secondHexID" : "h-1-0" } }
+      ],
+      "armies" : [
+        { "id" : "crown-army", "ownerID" : "crown", "hexID" : "h-0-0", "unitTypeID" : "spearmen", "quantity" : 4 },
+        { "id" : "union-army", "ownerID" : "union", "hexID" : "h-1-1", "unitTypeID" : "archers", "quantity" : 4 }
+      ],
+      "cities" : [
+        { "id" : "crown-city", "ownerID" : "crown", "hexID" : "h-0-0", "levelID" : "town" },
+        { "id" : "union-city", "ownerID" : "union", "hexID" : "h-1-1", "levelID" : "town" }
+      ],
+      "buildings" : [
+        { "id" : "crown-market", "cityID" : "crown-city", "typeID" : "market" },
+        { "id" : "union-barracks", "cityID" : "union-city", "typeID" : "barracks" }
+      ],
+      "phase" : "setup"
+    }
+  }
+}

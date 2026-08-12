@@ -8,7 +8,11 @@ let package = Package(
         .library(name: "MedievalDomain", targets: ["MedievalDomain"]),
     ],
     targets: [
-        .target(name: "MedievalDomain", path: "Medieval/Domain"),
+        .target(
+            name: "MedievalDomain",
+            path: "Medieval/Domain",
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "MedievalDomainTests", dependencies: ["MedievalDomain"]),
     ]
 )

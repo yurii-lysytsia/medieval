@@ -265,7 +265,7 @@
 				DEVELOPMENT_TEAM = XAU3F58R7T;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = "Medieval/Domain/*";
+				EXCLUDED_SOURCE_FILE_NAMES = "Medieval/Domain/* Medieval/Domain/Resources/*";
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -299,7 +299,7 @@
 				DEVELOPMENT_TEAM = XAU3F58R7T;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = "Medieval/Domain/*";
+				EXCLUDED_SOURCE_FILE_NAMES = "Medieval/Domain/* Medieval/Domain/Resources/*";
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
