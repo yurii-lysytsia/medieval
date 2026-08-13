@@ -56,12 +56,20 @@ public struct GameState: Codable, Equatable, Sendable {
     public private(set) var players: [Player]
     public private(set) var activePlayerIndex: Int
     public private(set) var turn: Int
+    public private(set) var phase: GamePhase
+    public private(set) var actionHistory: [GameAction]
+    public private(set) var result: MatchResult?
+    public private(set) var journal: [MatchJournalEntry]
 
     public init(
         players: [Player],
         seed: UInt64 = UInt64.random(in: .min ... .max),
         activePlayerIndex: Int = 0,
-        turn: Int = 1
+        turn: Int = 1,
+        phase: GamePhase = .economy,
+        actionHistory: [GameAction] = [],
+        result: MatchResult? = nil,
+        journal: [MatchJournalEntry] = []
     ) {
         if let violation = Self.invariantViolation(
             players: players,
@@ -74,6 +82,10 @@ public struct GameState: Codable, Equatable, Sendable {
         self.players = players
         self.activePlayerIndex = activePlayerIndex
         self.turn = turn
+        self.phase = phase
+        self.actionHistory = actionHistory
+        self.result = result
+        self.journal = journal
     }
 
     /// Decoded state comes from files we do not control, so the invariants that
@@ -100,17 +112,35 @@ public struct GameState: Codable, Equatable, Sendable {
         self.players = players
         self.activePlayerIndex = activePlayerIndex
         self.turn = turn
+        phase = try container.decodeIfPresent(GamePhase.self, forKey: .phase) ?? .economy
+        actionHistory = try container.decodeIfPresent([GameAction].self, forKey: .actionHistory) ?? []
+        result = try container.decodeIfPresent(MatchResult.self, forKey: .result)
+        journal = try container.decodeIfPresent([MatchJournalEntry].self, forKey: .journal) ?? []
     }
 
     public var activePlayer: Player {
         players[activePlayerIndex]
     }
 
-    mutating func advanceTurn() {
-        activePlayerIndex = (activePlayerIndex + 1) % players.count
-        if activePlayerIndex == 0 {
+    public var activePlayers: [Player] {
+        players.filter { $0.status == .active }
+    }
+
+    mutating func advanceTurn(using action: GameAction) {
+        let previousIndex = activePlayerIndex
+        repeat {
+            activePlayerIndex = (activePlayerIndex + 1) % players.count
+        } while players[activePlayerIndex].status == .eliminated && activePlayerIndex != previousIndex
+        if activePlayerIndex <= previousIndex {
             turn += 1
         }
+        phase = .handoff
+        actionHistory.append(action)
+    }
+
+    mutating func advancePhase(to phase: GamePhase, using action: GameAction) {
+        self.phase = phase
+        actionHistory.append(action)
     }
 
     /// What every `GameState` must satisfy, shared by `init` and `init(from:)`.

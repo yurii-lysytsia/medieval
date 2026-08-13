@@ -140,7 +140,8 @@ final class GameStore: ObservableObject {
                   for: playerID,
                   at: hexID,
                   in: world,
-                  terrain: content.terrain
+                  terrain: content.terrain,
+                  cityLevels: content.cityLevels
               )
         else {
             present("Неможливо заснувати столицю на вибраному гексі.", severity: .error)
@@ -278,11 +279,10 @@ final class GameStore: ObservableObject {
         battleReport = nil
         notices = []
         criticalNotice = nil
-        let configured: [GameSetupPlayer]?
-        if let setup, case let .success(valid) = GameSetupRules.validate(setup) {
-            configured = valid
+        let configured: [GameSetupPlayer]? = if let setup, case let .success(valid) = GameSetupRules.validate(setup) {
+            valid
         } else {
-            configured = nil
+            nil
         }
         let choices = configured ?? world.players.enumerated().map { index, player in
             GameSetupPlayer(name: player.displayName, color: PlayerColor.allCases[index])
@@ -328,7 +328,7 @@ final class GameStore: ObservableObject {
 
     private static func loadBundledContent() -> GameContentConfiguration {
         do {
-            return try GameContentLoader.loadMVP()
+            return try GameContentLoader.loadEuropeMap()
         } catch {
             fatalError(error.localizedDescription)
         }

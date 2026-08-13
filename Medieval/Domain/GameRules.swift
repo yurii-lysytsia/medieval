@@ -75,7 +75,18 @@ public enum GameRules {
             next.advancePhase(to: followingPhase, using: action)
         case let .endTurn(playerID):
             guard playerID == state.activePlayer.id else { return .failure(.playerIsNotActive) }
-            next.advanceTurn()
+            guard state.phase == .combat else { return .failure(.invalidPhase(state.phase)) }
+            next.advanceTurn(using: action)
+        case let .confirmHandoff(playerID):
+            guard playerID == state.activePlayer.id else { return .failure(.playerIsNotActive) }
+            guard state.phase == .handoff else { return .failure(.invalidPhase(state.phase)) }
+            next.completeHandoff(using: action)
+        case let .eliminatePlayer(playerID):
+            guard let player = state.players.first(where: { $0.id == playerID }) else {
+                return .failure(.playerNotFound(playerID))
+            }
+            guard player.status == .active else { return .failure(.playerAlreadyEliminated(playerID)) }
+            next.eliminate(playerID, using: action)
         }
 
         return .success(next)

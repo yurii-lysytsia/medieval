@@ -3,8 +3,6 @@ import SwiftUI
 
 struct RootView: View {
     @ObservedObject var coordinator: AppCoordinator
-    @State private var showsJournal = false
-    @State private var showsSaves = false
 
     var body: some View {
         switch coordinator.route {
@@ -24,6 +22,8 @@ struct RootView: View {
 struct GameScreen: View {
     @ObservedObject var game: GameStore
     let onShowMenu: () -> Void
+    @State private var showsJournal = false
+    @State private var showsSaves = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -42,53 +42,49 @@ struct GameScreen: View {
                 Button("Огляд мапи") {
                     game.resetMapCamera()
                 }
+                Button("Журнал") { showsJournal = true }
+                Button("Збереження") { showsSaves = true }
                 Button("До меню", action: onShowMenu)
             }
             .padding()
 
             Divider()
 
-            HStack(spacing: 0) {
-                GameView(
-                    state: game.state,
-                    map: game.content.scenario.map,
-                    world: game.content.scenario.world,
-                    selectedHexID: game.selectedHexID,
-                    cameraResetToken: game.cameraResetToken,
-                    onSelectHex: game.selectHex
-                )
-                .accessibilityLabel("Ігрове поле")
+            ZStack {
+                if game.state.phase == .finished {
+                    victoryScreen
+                } else if game.state.phase == .handoff {
+                    handoffScreen
+                } else {
+                    HStack(spacing: 0) {
+                        GameView(
+                            state: game.state,
+                            map: game.content.scenario.map,
+                            world: game.world,
+                            selectedHexID: game.selectedHexID,
+                            reachableHexIDs: Set(game.movementPreview.map { Array($0.routes.keys) } ?? []),
+                            encounterHexIDs: game.movementPreview?.encounterHexIDs ?? [],
+                            previewRoute: game.previewRoute,
+                            cameraResetToken: game.cameraResetToken,
+                            onSelectHex: game.selectHex
+                        )
+                        .accessibilityLabel("Ігрове поле")
 
-                Divider()
-
-                HStack(spacing: 0) {
-                    GameView(
-                        state: coordinator.game.state,
-                        map: coordinator.game.content.scenario.map,
-                        world: coordinator.game.world,
-                        selectedHexID: coordinator.game.selectedHexID,
-                        reachableHexIDs: Set(coordinator.game.movementPreview.map { Array($0.routes.keys) } ?? []),
-                        encounterHexIDs: coordinator.game.movementPreview?.encounterHexIDs ?? [],
-                        previewRoute: coordinator.game.previewRoute,
-                        cameraResetToken: coordinator.game.cameraResetToken,
-                        onSelectHex: coordinator.game.selectHex
-                    )
-                    .accessibilityLabel("Ігрове поле")
-
-                    Divider()
-                    mapInspector
+                        Divider()
+                        mapInspector
+                    }
                 }
-            }
-            if let report = coordinator.game.battleReport {
-                battleReport(report)
-            }
-            if let notice = coordinator.game.criticalNotice {
-                criticalNotice(notice)
+                if let report = game.battleReport {
+                    battleReport(report)
+                }
+                if let notice = game.criticalNotice {
+                    criticalNotice(notice)
+                }
             }
         }
         .sheet(isPresented: $showsJournal) { journalView }
         .sheet(isPresented: $showsSaves) {
-            SaveManagerView(game: coordinator.game, allowsSaving: true) { _ in showsSaves = false }
+            SaveManagerView(game: game, allowsSaving: true) { _ in showsSaves = false }
         }
     }
 
@@ -100,12 +96,12 @@ struct GameScreen: View {
                 .foregroundStyle(.brown)
             Text("Передайте пристрій")
                 .font(.largeTitle.bold())
-            Text("Наступний хід: \(coordinator.game.state.activePlayer.displayName)")
+            Text("Наступний хід: \(game.state.activePlayer.displayName)")
                 .font(.title3)
             Text("Ігрове поле та попередній вибір приховано.")
                 .foregroundStyle(.secondary)
             Button("Почати хід") {
-                coordinator.game.confirmHandoff()
+                game.confirmHandoff()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -123,8 +119,8 @@ struct GameScreen: View {
                 .foregroundStyle(.yellow)
             Text("Партію завершено")
                 .font(.largeTitle.bold())
-            if case let .winner(playerID) = coordinator.game.state.result,
-               let winner = coordinator.game.state.players.first(where: { $0.id == playerID })
+            if case let .winner(playerID) = game.state.result,
+               let winner = game.state.players.first(where: { $0.id == playerID })
             {
                 Text("Переможець: \(winner.displayName)")
                     .font(.title2)
@@ -133,7 +129,7 @@ struct GameScreen: View {
                     .font(.title2)
             }
             Button("Повернутися до меню") {
-                coordinator.showMenu()
+                onShowMenu()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -172,7 +168,7 @@ struct GameScreen: View {
                 Text("\(modifier.name): +\(modifier.percent)% оборони")
             }
             Text(reportOutcome(report.outcome)).font(.headline)
-            Button("Продовжити") { coordinator.game.dismissBattleReport() }
+            Button("Продовжити") { game.dismissBattleReport() }
                 .buttonStyle(.borderedProminent)
         }
         .padding(24)
@@ -193,7 +189,7 @@ struct GameScreen: View {
         NavigationStack {
             List {
                 Section("Повідомлення") {
-                    ForEach(coordinator.game.notices.reversed()) { notice in
+                    ForEach(game.notices.reversed()) { notice in
                         VStack(alignment: .leading, spacing: 3) {
                             Text(notice.text)
                             Text("Хід \(notice.turn) · \(notice.phase.rawValue) · \(notice.date.formatted(date: .omitted, time: .shortened))")
@@ -202,7 +198,7 @@ struct GameScreen: View {
                     }
                 }
                 Section("Події партії") {
-                    ForEach(coordinator.game.journalItems.reversed()) { item in
+                    ForEach(game.journalItems.reversed()) { item in
                         VStack(alignment: .leading, spacing: 3) {
                             Text(item.text)
                             Text("Хід \(item.turn) · \(item.phase.rawValue)")
@@ -221,7 +217,7 @@ struct GameScreen: View {
             Label("Дія не виконана", systemImage: "exclamationmark.triangle.fill")
                 .font(.headline).foregroundStyle(.red)
             Text(notice.text)
-            Button("Зрозуміло") { coordinator.game.dismissCriticalNotice() }
+            Button("Зрозуміло") { game.dismissCriticalNotice() }
                 .buttonStyle(.borderedProminent)
         }
         .padding(20)

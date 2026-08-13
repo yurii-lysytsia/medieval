@@ -26,6 +26,7 @@ public enum WorldPlayerTag {}
 public enum ArmyTag {}
 public enum CityTag {}
 public enum BuildingTag {}
+public enum UnitTag {}
 public enum UnitTypeTag {}
 public enum TerrainTag {}
 public enum CityLevelTag {}
@@ -37,6 +38,7 @@ public typealias WorldPlayerID = Identifier<WorldPlayerTag>
 public typealias ArmyID = Identifier<ArmyTag>
 public typealias CityID = Identifier<CityTag>
 public typealias BuildingID = Identifier<BuildingTag>
+public typealias UnitID = Identifier<UnitTag>
 public typealias UnitTypeID = Identifier<UnitTypeTag>
 public typealias TerrainID = Identifier<TerrainTag>
 public typealias CityLevelID = Identifier<CityLevelTag>
@@ -322,6 +324,7 @@ public struct WorldState: Codable, Equatable, Sendable {
         self.players = players
         hexes = try container.decode([Hex].self, forKey: .hexes)
         riverBoundaries = try container.decode([RiverBoundary].self, forKey: .riverBoundaries)
+        units = try container.decodeIfPresent([Unit].self, forKey: .units) ?? []
         armies = try container.decode([Army].self, forKey: .armies)
         cities = try container.decode([City].self, forKey: .cities)
         buildings = try container.decode([Building].self, forKey: .buildings)
@@ -340,6 +343,14 @@ public struct WorldState: Codable, Equatable, Sendable {
         precondition((2 ... 4).contains(players.count), "A match supports two to four players.")
         self.players = players
         prepareCapitalPlacement()
+    }
+
+    private mutating func prepareCapitalPlacement() {
+        units = []
+        armies = []
+        cities = []
+        buildings = []
+        phase = .capitalPlacement
     }
 
     mutating func addCapital(for playerID: WorldPlayerID, at hexID: HexID, levelID: CityLevelID) {

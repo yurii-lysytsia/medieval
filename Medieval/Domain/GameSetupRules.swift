@@ -38,7 +38,7 @@ public enum GameSetupRules {
             let key = player.name.lowercased()
             guard names.insert(key).inserted else { return .failure(.duplicateName(player.name)) }
         }
-        guard Set(normalized.map { $0.1.color }).count == players.count else { return .failure(.duplicateColor(players[0].color)) }
+        guard Set(normalized.map(\.1.color)).count == players.count else { return .failure(.duplicateColor(players[0].color)) }
         return .success(normalized.map(\.1))
     }
 }

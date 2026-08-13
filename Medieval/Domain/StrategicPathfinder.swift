@@ -37,12 +37,12 @@ public enum StrategicPathfinder {
         world: WorldState,
         terrain: [TerrainDefinition]
     ) -> [HexID: MovementRoute] {
+        let terrainByID = Dictionary(uniqueKeysWithValues: terrain.map { ($0.id, $0) })
         guard budget >= 0,
               let originHex = world.hexes.first(where: { $0.id == origin }),
-              canOccupy(originHex, domain: domain)
+              canOccupy(originHex, domain: domain, terrainByID: terrainByID)
         else { return [:] }
         let neighbors = Dictionary(uniqueKeysWithValues: map.neighborhoods.map { ($0.hexID, $0.neighborHexIDs) })
-        let terrainByID = Dictionary(uniqueKeysWithValues: terrain.map { ($0.id, $0) })
         let hexByID = Dictionary(uniqueKeysWithValues: world.hexes.map { ($0.id, $0) })
         var routes: [HexID: MovementRoute] = [origin: MovementRoute(hexIDs: [origin], cost: 0)]
         var frontier: [HexID] = [origin]
@@ -99,9 +99,13 @@ public enum StrategicPathfinder {
         }
     }
 
-    private static func canOccupy(_ hex: Hex, domain: MovementDomain) -> Bool {
+    private static func canOccupy(
+        _ hex: Hex,
+        domain: MovementDomain,
+        terrainByID: [TerrainID: TerrainDefinition]
+    ) -> Bool {
         switch domain {
-        case .land: hex.terrainID != "deep-water" && hex.isPassable
+        case .land: hex.terrainID != "deep-water" && terrainByID[hex.terrainID]?.isPassable == true
         case .naval: hex.terrainID == "shallows" || hex.terrainID == "deep-water"
         }
     }
