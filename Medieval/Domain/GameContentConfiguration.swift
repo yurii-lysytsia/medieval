@@ -33,27 +33,41 @@ public struct UnitDefinition: Codable, Equatable, Sendable, Identifiable {
     public let displayName: String
     public let recruitmentCost: Int
     public let upkeep: Int
-    public let attack: Int
-    public let defense: Int
+    public let hitPoints: Int
+    public let damage: Int
+    public let attackRange: Int
     public let movement: Int
+    public let domain: UnitDomain
+    public let cargoCapacity: Int
 
     public init(
         id: UnitTypeID,
         displayName: String,
         recruitmentCost: Int,
         upkeep: Int,
-        attack: Int,
-        defense: Int,
-        movement: Int
+        hitPoints: Int,
+        damage: Int,
+        attackRange: Int,
+        movement: Int,
+        domain: UnitDomain,
+        cargoCapacity: Int = 0
     ) {
         self.id = id
         self.displayName = displayName
         self.recruitmentCost = recruitmentCost
         self.upkeep = upkeep
-        self.attack = attack
-        self.defense = defense
+        self.hitPoints = hitPoints
+        self.damage = damage
+        self.attackRange = attackRange
         self.movement = movement
+        self.domain = domain
+        self.cargoCapacity = cargoCapacity
     }
+}
+
+public enum UnitDomain: String, Codable, Equatable, Sendable {
+    case land
+    case navalTransport
 }
 
 public struct CityLevelDefinition: Codable, Equatable, Sendable, Identifiable {

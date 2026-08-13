@@ -52,6 +52,7 @@ struct GameContentConfigurationTests {
               ],
               "hexes": [],
               "riverBoundaries": [],
+              "units": [],
               "armies": [],
               "cities": [],
               "buildings": [],

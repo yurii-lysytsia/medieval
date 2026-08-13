@@ -168,6 +168,44 @@ public struct WorldPlayer: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+public enum UnitCondition: String, Codable, Equatable, Sendable {
+    case ready
+    case moved
+    case embarked
+    case destroyed
+}
+
+public enum UnitLocation: Codable, Equatable, Sendable {
+    case hex(HexID)
+    case garrison(CityID)
+    case cargo(ArmyID)
+}
+
+public struct Unit: Codable, Equatable, Sendable, Identifiable {
+    public let id: UnitID
+    public let ownerID: WorldPlayerID
+    public let typeID: UnitTypeID
+    public let currentHitPoints: Int
+    public let condition: UnitCondition
+    public let location: UnitLocation
+
+    public init(
+        id: UnitID,
+        ownerID: WorldPlayerID,
+        typeID: UnitTypeID,
+        currentHitPoints: Int,
+        condition: UnitCondition = .ready,
+        location: UnitLocation
+    ) {
+        self.id = id
+        self.ownerID = ownerID
+        self.typeID = typeID
+        self.currentHitPoints = currentHitPoints
+        self.condition = condition
+        self.location = location
+    }
+}
+
 public struct Army: Codable, Equatable, Sendable, Identifiable {
     public let id: ArmyID
     public let ownerID: WorldPlayerID
@@ -229,6 +267,7 @@ public struct WorldState: Codable, Equatable, Sendable {
     public private(set) var players: [WorldPlayer]
     public private(set) var hexes: [Hex]
     public private(set) var riverBoundaries: [RiverBoundary]
+    public private(set) var units: [Unit]
     public private(set) var armies: [Army]
     public private(set) var cities: [City]
     public private(set) var buildings: [Building]
@@ -238,6 +277,7 @@ public struct WorldState: Codable, Equatable, Sendable {
         players: [WorldPlayer],
         hexes: [Hex],
         riverBoundaries: [RiverBoundary] = [],
+        units: [Unit] = [],
         armies: [Army] = [],
         cities: [City] = [],
         buildings: [Building] = [],
@@ -249,6 +289,7 @@ public struct WorldState: Codable, Equatable, Sendable {
         self.players = players
         self.hexes = hexes
         self.riverBoundaries = riverBoundaries
+        self.units = units
         self.armies = armies
         self.cities = cities
         self.buildings = buildings
@@ -304,5 +345,9 @@ public struct WorldState: Codable, Equatable, Sendable {
         guard let index = cities.firstIndex(where: { $0.id == cityID }) else { return }
         let city = cities[index]
         cities[index] = City(id: city.id, ownerID: city.ownerID, hexID: city.hexID, levelID: levelID, isCapital: city.isCapital)
+    }
+
+    mutating func addUnit(_ unit: Unit) {
+        units.append(unit)
     }
 }
