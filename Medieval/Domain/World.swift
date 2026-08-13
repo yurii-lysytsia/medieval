@@ -336,6 +336,12 @@ public struct WorldState: Codable, Equatable, Sendable {
         riverBoundaries.first { $0.boundary.connects(firstHexID, secondHexID) }
     }
 
+    public mutating func configurePlayers(_ players: [WorldPlayer]) {
+        precondition((2 ... 4).contains(players.count), "A match supports two to four players.")
+        self.players = players
+        prepareCapitalPlacement()
+    }
+
     mutating func addCapital(for playerID: WorldPlayerID, at hexID: HexID, levelID: CityLevelID) {
         cities.append(City(id: CityID(rawValue: "capital-\(playerID.rawValue)"), ownerID: playerID, hexID: hexID, levelID: levelID, isCapital: true))
         if cities.filter(\.isCapital).count == players.count {

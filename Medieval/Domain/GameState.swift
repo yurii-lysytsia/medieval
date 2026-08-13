@@ -5,16 +5,22 @@ public enum PlayerStatus: String, Codable, Equatable, Sendable {
     case eliminated
 }
 
+public enum PlayerColor: String, Codable, CaseIterable, Equatable, Sendable {
+    case red, blue, green, gold
+}
+
 public struct Player: Codable, Equatable, Sendable, Identifiable {
     public let id: UUID
     public let displayName: String
     public let worldPlayerID: WorldPlayerID?
+    public let color: PlayerColor
     public let status: PlayerStatus
 
-    public init(id: UUID = UUID(), displayName: String, worldPlayerID: WorldPlayerID? = nil, status: PlayerStatus = .active) {
+    public init(id: UUID = UUID(), displayName: String, worldPlayerID: WorldPlayerID? = nil, color: PlayerColor = .red, status: PlayerStatus = .active) {
         self.id = id
         self.displayName = displayName
         self.worldPlayerID = worldPlayerID
+        self.color = color
         self.status = status
     }
 }
@@ -131,10 +137,19 @@ public struct GameState: Codable, Equatable, Sendable {
         actionHistory.append(action)
     }
 
+    mutating func advanceCapitalPlacement() {
+        activePlayerIndex = (activePlayerIndex + 1) % players.count
+    }
+
+    mutating func finishCapitalPlacement() {
+        activePlayerIndex = 0
+        phase = .economy
+    }
+
     mutating func eliminate(_ playerID: UUID, using action: GameAction) {
         guard let index = players.firstIndex(where: { $0.id == playerID }) else { return }
         let player = players[index]
-        players[index] = Player(id: player.id, displayName: player.displayName, worldPlayerID: player.worldPlayerID, status: .eliminated)
+        players[index] = Player(id: player.id, displayName: player.displayName, worldPlayerID: player.worldPlayerID, color: player.color, status: .eliminated)
         journal.append(MatchJournalEntry(turn: turn, phase: phase, event: .playerEliminated(playerID: playerID)))
         actionHistory.append(action)
 
