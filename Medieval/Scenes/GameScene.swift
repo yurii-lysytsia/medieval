@@ -103,20 +103,27 @@ final class GameScene: SKScene {
         clampMapPosition()
     }
 
-    override func scrollWheel(with event: NSEvent) {
-        // A horizontal scroll reports a vertical delta of zero. Without this
-        // guard it fell through to the "scrolled down" branch, so swiping
-        // sideways on a trackpad zoomed the map out.
-        guard event.scrollingDeltaY != 0 else { return }
+    func handleScrollWheel(with event: NSEvent) {
+        // Two-finger trackpad scrolling pans in both axes. Holding Command
+        // turns it into zoom, matching the familiar map/canvas convention.
+        if event.hasPreciseScrollingDeltas,
+           !event.modifierFlags.contains(.command)
+        {
+            mapContainer.position = CGPoint(
+                x: mapContainer.position.x + event.scrollingDeltaX,
+                y: mapContainer.position.y + event.scrollingDeltaY
+            )
+            clampMapPosition()
+            return
+        }
 
-        // A trackpad emits a stream of small precise deltas where a mouse emits
-        // one coarse tick, so a fixed step per event made the trackpad lurch.
+        guard event.scrollingDeltaY != 0 else { return }
         let step = min(abs(event.scrollingDeltaY), Self.fullZoomStepDelta) / Self.fullZoomStepDelta
         let factor = 1 + step * (event.scrollingDeltaY > 0 ? 0.12 : -0.11)
         setZoom(zoom * factor, anchoredAt: event.location(in: self))
     }
 
-    override func magnify(with event: NSEvent) {
+    func handleMagnify(with event: NSEvent) {
         setZoom(zoom * (1 + event.magnification), anchoredAt: event.location(in: self))
     }
 
