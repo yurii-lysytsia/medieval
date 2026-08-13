@@ -134,7 +134,9 @@ public enum ArmyOperations {
             guard let hex = world.hexes.first(where: { $0.id == destination }),
                   let definition = terrain.first(where: { $0.id == hex.terrainID })
             else { return .failure(.invalidRoute(origin, destination)) }
-            guard hex.terrainID != "deep-water" else { return .failure(.deepWaterRequiresTransport(destination)) }
+            guard terrain.first(where: { $0.id == hex.terrainID })?.domain != .deepWater else {
+                return .failure(.deepWaterRequiresTransport(destination))
+            }
             cost += definition.movementCost + (RiverRules.crossesRiver(from: origin, to: destination, in: world) ? 1 : 0)
         }
         let armyUnits = army.unitIDs.compactMap { id in world.units.first(where: { $0.id == id }) }
@@ -154,6 +156,7 @@ public enum ArmyOperations {
         on shipID: UnitID,
         world: WorldState,
         map: StaticHexMap,
+        terrain: [TerrainDefinition],
         definitions: [UnitDefinition]
     ) -> Result<WorldState, ArmyOperationError> {
         guard world.phase == .movement else { return .failure(.invalidPhase(world.phase)) }
@@ -164,7 +167,7 @@ public enum ArmyOperations {
               case let .hex(shipHexID) = ship.location
         else { return .failure(.shipNotFound(shipID)) }
         guard ship.ownerID == army.ownerID else { return .failure(.incompatibleOwner) }
-        guard areSameOrAdjacent(army.hexID, shipHexID, map: map), isEmbarkationPair(army.hexID, shipHexID, world: world) else {
+        guard areSameOrAdjacent(army.hexID, shipHexID, map: map), isEmbarkationPair(army.hexID, shipHexID, world: world, terrain: terrain) else {
             return .failure(.embarkationPointRequired)
         }
         let capacity = definitions.first(where: { $0.id == ship.typeID })?.cargoCapacity ?? 0
@@ -185,6 +188,7 @@ public enum ArmyOperations {
         along route: [HexID],
         world: WorldState,
         map: StaticHexMap,
+        terrain: [TerrainDefinition],
         definitions: [UnitDefinition]
     ) -> Result<WorldState, ArmyOperationError> {
         guard world.phase == .movement else { return .failure(.invalidPhase(world.phase)) }
@@ -199,7 +203,7 @@ public enum ArmyOperations {
         guard route.count - 1 <= definition.movement else { return .failure(.movementExceeded(required: route.count - 1, available: definition.movement)) }
         for hexID in route.dropFirst() {
             guard let terrainID = world.hexes.first(where: { $0.id == hexID })?.terrainID,
-                  terrainID == "shallows" || terrainID == "deep-water"
+                  terrain.first(where: { $0.id == terrainID })?.domain.isWater == true
             else { return .failure(.navalRouteRequired(hexID)) }
         }
         let destination = route.last!
@@ -215,15 +219,16 @@ public enum ArmyOperations {
         _ armyID: ArmyID,
         to destination: HexID,
         world: WorldState,
-        map: StaticHexMap
+        map: StaticHexMap,
+        terrain: [TerrainDefinition]
     ) -> Result<WorldState, ArmyOperationError> {
         guard world.phase == .movement else { return .failure(.invalidPhase(world.phase)) }
         guard let army = world.armies.first(where: { $0.id == armyID }), let shipID = army.embarkedOnShipID else { return .failure(.armyNotFound(armyID)) }
         guard let ship = world.units.first(where: { $0.id == shipID }), case let .hex(shipHexID) = ship.location else { return .failure(.shipNotFound(shipID)) }
         guard areSameOrAdjacent(shipHexID, destination, map: map),
               let terrainID = world.hexes.first(where: { $0.id == destination })?.terrainID,
-              terrainID != "deep-water",
-              isEmbarkationPair(destination, shipHexID, world: world)
+              terrain.first(where: { $0.id == terrainID })?.domain != .deepWater,
+              isEmbarkationPair(destination, shipHexID, world: world, terrain: terrain)
         else { return .failure(.embarkationPointRequired) }
 
         var next = world
@@ -270,8 +275,10 @@ public enum ArmyOperations {
         first == second || (map.neighborhoods.first(where: { $0.hexID == first })?.neighborHexIDs.contains(second) == true)
     }
 
-    private static func isEmbarkationPair(_ first: HexID, _ second: HexID, world: WorldState) -> Bool {
-        let terrainIDs = [first, second].compactMap { id in world.hexes.first(where: { $0.id == id })?.terrainID }
-        return terrainIDs.contains("shallows") && !terrainIDs.contains("deep-water")
+    private static func isEmbarkationPair(_ first: HexID, _ second: HexID, world: WorldState, terrain: [TerrainDefinition]) -> Bool {
+        let domains = [first, second]
+            .compactMap { id in world.hexes.first(where: { $0.id == id })?.terrainID }
+            .compactMap { id in terrain.first(where: { $0.id == id })?.domain }
+        return domains.contains(.shallows) && !domains.contains(.deepWater)
     }
 }

@@ -26,33 +26,33 @@ struct ArmyOperationsTests {
 
     @Test func embarkationPreservesCompositionAndHonorsShipCapacity() throws {
         let formed = try ArmyOperations.formArmy(id: "army", ownerID: "crown", unitIDs: ["u1", "u2"], world: world(), map: map, definitions: definitions).get()
-        let embarked = try ArmyOperations.embark("army", on: "ship", world: formed, map: map, definitions: definitions).get()
+        let embarked = try ArmyOperations.embark("army", on: "ship", world: formed, map: map, terrain: terrain, definitions: definitions).get()
 
         #expect(embarked.armies[0].unitIDs == ["u1", "u2"])
         #expect(embarked.armies[0].embarkedOnShipID == "ship")
         #expect(embarked.units.first(where: { $0.id == "u1" })?.location == .cargo("ship"))
 
         let overloaded = try ArmyOperations.formArmy(id: "large", ownerID: "crown", unitIDs: ["u1", "u2", "u3", "u4"], world: world(), map: map, definitions: definitions).get()
-        #expect(ArmyOperations.embark("large", on: "ship", world: overloaded, map: map, definitions: definitions) == .failure(.shipCapacityExceeded(limit: 3)))
+        #expect(ArmyOperations.embark("large", on: "ship", world: overloaded, map: map, terrain: terrain, definitions: definitions) == .failure(.shipCapacityExceeded(limit: 3)))
     }
 
     @Test func shipMovesCargoAndDisembarkationRestoresLandArmy() throws {
         let formed = try ArmyOperations.formArmy(id: "army", ownerID: "crown", unitIDs: ["u1", "u2"], world: world(), map: map, definitions: definitions).get()
-        let embarked = try ArmyOperations.embark("army", on: "ship", world: formed, map: map, definitions: definitions).get()
-        let sailed = try ArmyOperations.moveShip("ship", along: ["shallows", "deep"], world: embarked, map: map, definitions: definitions).get()
+        let embarked = try ArmyOperations.embark("army", on: "ship", world: formed, map: map, terrain: terrain, definitions: definitions).get()
+        let sailed = try ArmyOperations.moveShip("ship", along: ["shallows", "deep"], world: embarked, map: map, terrain: terrain, definitions: definitions).get()
 
         #expect(sailed.armies[0].hexID == "deep")
         #expect(sailed.units.first(where: { $0.id == "u1" })?.location == .cargo("ship"))
-        #expect(ArmyOperations.moveShip("ship", along: ["deep", "shallows"], world: sailed, map: map, definitions: definitions) == .failure(.shipAlreadyMoved("ship")))
+        #expect(ArmyOperations.moveShip("ship", along: ["deep", "shallows"], world: sailed, map: map, terrain: terrain, definitions: definitions) == .failure(.shipAlreadyMoved("ship")))
 
-        let disembarked = try ArmyOperations.disembark("army", to: "land", world: embarked, map: map).get()
+        let disembarked = try ArmyOperations.disembark("army", to: "land", world: embarked, map: map, terrain: terrain).get()
         #expect(disembarked.armies[0].embarkedOnShipID == nil)
         #expect(disembarked.armies[0].hexID == "land")
         #expect(disembarked.units.first(where: { $0.id == "u1" })?.location == .hex("land"))
     }
 
     @Test func shipRouteRejectsLandAtAnyStepAndDestroyedArmyRemovesItsUnits() throws {
-        let invalidRoute = ArmyOperations.moveShip("ship", along: ["shallows", "deep", "far-land"], world: world(), map: map, definitions: definitions)
+        let invalidRoute = ArmyOperations.moveShip("ship", along: ["shallows", "deep", "far-land"], world: world(), map: map, terrain: terrain, definitions: definitions)
         #expect(invalidRoute == .failure(.navalRouteRequired("far-land")))
 
         let formed = try ArmyOperations.formArmy(id: "army", ownerID: "crown", unitIDs: ["u1", "u2"], world: world(), map: map, definitions: definitions).get()
@@ -66,9 +66,9 @@ struct ArmyOperationsTests {
         UnitDefinition(id: "ship", displayName: "Ship", recruitmentCost: 40, upkeep: 3, hitPoints: 0, damage: 0, attackRange: 0, movement: 4, domain: .navalTransport, cargoCapacity: 3),
     ]
     private let terrain = [
-        TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-        TerrainDefinition(id: "shallows", displayName: "Shallows", movementCost: 2, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: false),
-        TerrainDefinition(id: "deep-water", displayName: "Deep Water", movementCost: 0, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
+        TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+        TerrainDefinition(id: "shallows", displayName: "Shallows", domain: .shallows, movementCost: 2, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: false),
+        TerrainDefinition(id: "deep-water", displayName: "Deep Water", domain: .deepWater, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
     ]
     private var map: StaticHexMap {
         StaticHexMap(

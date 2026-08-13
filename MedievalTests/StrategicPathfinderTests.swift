@@ -26,10 +26,10 @@ struct StrategicPathfinderTests {
     }
 
     private let terrain = [
-        TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-        TerrainDefinition(id: "forest", displayName: "Forest", movementCost: 2, defenseModifier: 20, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-        TerrainDefinition(id: "shallows", displayName: "Shallows", movementCost: 2, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: false),
-        TerrainDefinition(id: "deep-water", displayName: "Deep", movementCost: 0, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
+        TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+        TerrainDefinition(id: "forest", displayName: "Forest", domain: .land, movementCost: 2, defenseModifier: 20, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+        TerrainDefinition(id: "shallows", displayName: "Shallows", domain: .shallows, movementCost: 2, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: false),
+        TerrainDefinition(id: "deep-water", displayName: "Deep", domain: .deepWater, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
     ]
 
     private var map: StaticHexMap {

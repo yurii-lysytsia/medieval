@@ -1,8 +1,21 @@
 import Foundation
 
+/// Which kind of movement a terrain belongs to.
+///
+/// Rules ask for this rather than comparing terrain ids, so renaming a terrain
+/// in the content cannot silently disable movement, recruitment or embarkation.
+public enum TerrainDomain: String, Codable, Equatable, Sendable {
+    case land
+    case shallows
+    case deepWater
+
+    public var isWater: Bool { self != .land }
+}
+
 public struct TerrainDefinition: Codable, Equatable, Sendable, Identifiable {
     public let id: TerrainID
     public let displayName: String
+    public let domain: TerrainDomain
     public let movementCost: Int
     public let defenseModifier: Int
     public let incomeModifier: Int
@@ -12,6 +25,7 @@ public struct TerrainDefinition: Codable, Equatable, Sendable, Identifiable {
     public init(
         id: TerrainID,
         displayName: String,
+        domain: TerrainDomain,
         movementCost: Int,
         defenseModifier: Int,
         incomeModifier: Int,
@@ -20,6 +34,7 @@ public struct TerrainDefinition: Codable, Equatable, Sendable, Identifiable {
     ) {
         self.id = id
         self.displayName = displayName
+        self.domain = domain
         self.movementCost = movementCost
         self.defenseModifier = defenseModifier
         self.incomeModifier = incomeModifier

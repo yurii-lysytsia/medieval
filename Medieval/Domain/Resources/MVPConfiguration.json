@@ -7,7 +7,8 @@
       "defenseModifier": 0,
       "incomeModifier": 2,
       "isPassable": true,
-      "isCityBuildable": true
+      "isCityBuildable": true,
+      "domain": "land"
     },
     {
       "id": "desert",
@@ -16,7 +17,8 @@
       "defenseModifier": 0,
       "incomeModifier": -2,
       "isPassable": true,
-      "isCityBuildable": false
+      "isCityBuildable": false,
+      "domain": "land"
     },
     {
       "id": "forest",
@@ -25,7 +27,8 @@
       "defenseModifier": 1,
       "incomeModifier": 1,
       "isPassable": true,
-      "isCityBuildable": true
+      "isCityBuildable": true,
+      "domain": "land"
     },
     {
       "id": "hills",
@@ -34,7 +37,8 @@
       "defenseModifier": 1,
       "incomeModifier": 0,
       "isPassable": true,
-      "isCityBuildable": true
+      "isCityBuildable": true,
+      "domain": "land"
     },
     {
       "id": "mountains",
@@ -43,7 +47,8 @@
       "defenseModifier": 2,
       "incomeModifier": -1,
       "isPassable": true,
-      "isCityBuildable": false
+      "isCityBuildable": false,
+      "domain": "land"
     },
     {
       "id": "swamp",
@@ -52,7 +57,8 @@
       "defenseModifier": 1,
       "incomeModifier": -1,
       "isPassable": true,
-      "isCityBuildable": false
+      "isCityBuildable": false,
+      "domain": "land"
     },
     {
       "id": "shallows",
@@ -61,16 +67,18 @@
       "defenseModifier": 0,
       "incomeModifier": 0,
       "isPassable": true,
-      "isCityBuildable": false
+      "isCityBuildable": false,
+      "domain": "shallows"
     },
     {
       "id": "deep-water",
       "displayName": "Глибока вода",
-      "movementCost": 0,
+      "movementCost": 1,
       "defenseModifier": 0,
       "incomeModifier": 0,
       "isPassable": false,
-      "isCityBuildable": false
+      "isCityBuildable": false,
+      "domain": "deepWater"
     }
   ],
   "units": [

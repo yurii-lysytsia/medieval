@@ -60,6 +60,7 @@ public enum RecruitmentRules {
         economy: EconomyState,
         ledger: RecruitmentLedger,
         map: StaticHexMap,
+        terrain: [TerrainDefinition],
         units: [UnitDefinition],
         cityLevels: [CityLevelDefinition]
     ) -> Result<RecruitmentResult, RecruitmentError> {
@@ -80,8 +81,8 @@ public enum RecruitmentRules {
             guard garrisonCount < level.recruitmentLimit else { return .failure(.garrisonFull(cityID, limit: level.recruitmentLimit)) }
         } else {
             let neighbors = map.neighborhoods.first(where: { $0.hexID == city.hexID })?.neighborHexIDs ?? []
-            let waterIDs: Set<TerrainID> = ["shallows", "deep-water"]
-            guard let waterHex = world.hexes.first(where: { neighbors.contains($0.id) && waterIDs.contains($0.terrainID) }) else {
+            let waterTerrainIDs = Set(terrain.filter(\.domain.isWater).map(\.id))
+            guard let waterHex = world.hexes.first(where: { neighbors.contains($0.id) && waterTerrainIDs.contains($0.terrainID) }) else {
                 return .failure(.navalUnitRequiresPort(unitTypeID))
             }
             recruitmentHexID = waterHex.id

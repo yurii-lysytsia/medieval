@@ -238,7 +238,7 @@ public enum GameContentValidator {
                 guard let hex = hexByID[hexID] else {
                     throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "hex \"\(hexID.rawValue)\"")
                 }
-                if definition.domain == .land, hex.terrainID == "deep-water" {
+                if definition.domain == .land, terrainByID[hex.terrainID]?.domain == .deepWater {
                     throw GameContentValidationError.impassablePlacement(entity: "Unit \"\(unit.id.rawValue)\"", hexID: hexID)
                 }
             }

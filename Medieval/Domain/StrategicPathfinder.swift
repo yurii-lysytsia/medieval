@@ -84,17 +84,18 @@ public enum StrategicPathfinder {
         hexByID: [HexID: Hex],
         terrainByID: [TerrainID: TerrainDefinition]
     ) -> Int? {
-        guard let hex = hexByID[destination] else { return nil }
+        guard let hex = hexByID[destination],
+              let definition = terrainByID[hex.terrainID]
+        else { return nil }
         switch domain {
         case .land:
-            guard hex.terrainID != "deep-water",
-                  let definition = terrainByID[hex.terrainID],
-                  definition.isPassable
-            else { return nil }
+            // Land may wade through shallows; only deep water needs a transport.
+            guard definition.domain != .deepWater, definition.isPassable else { return nil }
             return definition.movementCost + (RiverRules.crossesRiver(from: origin, to: destination, in: world) ? 1 : 0)
         case .naval:
-            guard hex.terrainID == "shallows" || hex.terrainID == "deep-water" else { return nil }
-            return 1
+            // Water costs what the content says it costs, like land does.
+            guard definition.domain.isWater else { return nil }
+            return definition.movementCost
         }
     }
 

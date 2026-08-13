@@ -76,8 +76,8 @@ struct GameContentValidatorTests {
         let city = City(id: "city-1", ownerID: "one", hexID: "desert", levelID: "village")
         let configuration = fixture(
             terrain: [
-                TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-                TerrainDefinition(id: "desert", displayName: "Desert", movementCost: 2, defenseModifier: 0, incomeModifier: -2, isPassable: true, isCityBuildable: false),
+                TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+                TerrainDefinition(id: "desert", displayName: "Desert", domain: .land, movementCost: 2, defenseModifier: 0, incomeModifier: -2, isPassable: true, isCityBuildable: false),
             ],
             world: world(hexes: [desert], cities: [city])
         )
@@ -206,8 +206,8 @@ struct GameContentValidatorTests {
         let resolvedWorld = world ?? self.world()
         return GameContentConfiguration(
             terrain: terrain ?? [
-                TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-                TerrainDefinition(id: "ocean", displayName: "Ocean", movementCost: 0, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
+                TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+                TerrainDefinition(id: "ocean", displayName: "Ocean", domain: .shallows, movementCost: 0, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
             ],
             units: units ?? [unit()],
             cityLevels: [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1, upgradeCost: 0)],

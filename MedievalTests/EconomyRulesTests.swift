@@ -22,7 +22,7 @@ struct EconomyRulesTests {
             for: "crown",
             in: world,
             economy: economy,
-            terrain: [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 2, isPassable: true, isCityBuildable: true)],
+            terrain: [TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 2, isPassable: true, isCityBuildable: true)],
             cityLevels: [CityLevelDefinition(id: "town", displayName: "Town", baseIncome: 8, buildingSlots: 2, upgradeCost: 0)],
             units: [UnitDefinition(id: "spearmen", displayName: "Spearmen", recruitmentCost: 1, upkeep: 1, hitPoints: 10, damage: 3, attackRange: 1, movement: 1, domain: .land, cargoCapacity: 0)],
             buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 1, incomeModifier: 3, defenseModifier: 0)]
@@ -49,7 +49,7 @@ struct EconomyRulesTests {
     @Test func repeatedResolutionsProduceDistinctJournalEntries() throws {
         // Player, kind and source repeat every turn the same city pays out, so
         // identity has to come from somewhere else.
-        let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
+        let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
         let cityLevels = [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 4, buildingSlots: 1, upgradeCost: 0)]
         let hexes = [Hex(id: "home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")]
         let cities = [City(id: "capital", ownerID: "crown", hexID: "home", levelID: "village", isCapital: true)]
@@ -75,7 +75,7 @@ struct EconomyRulesTests {
     @Test func spendingSharesTheJournalNumberingWithIncome() throws {
         // Purchases used to mint their own ids, so the journal carried two
         // competing schemes and only one of them was collision-free.
-        let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
+        let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
         let cityLevels = [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 4, buildingSlots: 1, upgradeCost: 0)]
         let world = WorldState(
             players: players,

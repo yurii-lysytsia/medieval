@@ -55,9 +55,9 @@ struct CapitalPlacementRulesTests {
     ]
 
     private let terrain = [
-        TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-        TerrainDefinition(id: "forest", displayName: "Forest", movementCost: 2, defenseModifier: 1, incomeModifier: 0, isPassable: true, isCityBuildable: true),
-        TerrainDefinition(id: "mountains", displayName: "Mountains", movementCost: 3, defenseModifier: 2, incomeModifier: 0, isPassable: true, isCityBuildable: false),
+        TerrainDefinition(id: "plains", displayName: "Plains", domain: .land, movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+        TerrainDefinition(id: "forest", displayName: "Forest", domain: .land, movementCost: 2, defenseModifier: 1, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+        TerrainDefinition(id: "mountains", displayName: "Mountains", domain: .land, movementCost: 3, defenseModifier: 2, incomeModifier: 0, isPassable: true, isCityBuildable: false),
     ]
 
     private func world() -> WorldState {
