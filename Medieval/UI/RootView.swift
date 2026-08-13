@@ -23,7 +23,9 @@ struct GameScreen: View {
     let onShowMenu: () -> Void
 
     var body: some View {
-        if game.state.phase == .handoff {
+        if game.state.phase == .finished {
+            victoryScreen
+        } else if game.state.phase == .handoff {
             handoffScreen
         } else {
             playScreen
@@ -92,6 +94,31 @@ struct GameScreen: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .keyboardShortcut(.return, modifiers: [])
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var victoryScreen: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            Image(systemName: "trophy.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.yellow)
+            Text("Партію завершено")
+                .font(.largeTitle.bold())
+            if case let .winner(playerID) = game.state.result,
+               let winner = game.state.players.first(where: { $0.id == playerID })
+            {
+                Text("Переможець: \(winner.displayName)")
+                    .font(.title2)
+            } else {
+                Text("Нічия")
+                    .font(.title2)
+            }
+            Button("Повернутися до меню", action: onShowMenu)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

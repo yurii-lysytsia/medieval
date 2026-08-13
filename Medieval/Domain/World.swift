@@ -395,4 +395,19 @@ public struct WorldState: Codable, Equatable, Sendable {
     mutating func removeArmy(_ armyID: ArmyID) {
         armies.removeAll { $0.id == armyID }
     }
+
+    mutating func removeCapital(for playerID: WorldPlayerID) {
+        let cityIDs = Set(cities.filter { $0.ownerID == playerID }.map(\.id))
+        cities.removeAll { cityIDs.contains($0.id) }
+        buildings.removeAll { cityIDs.contains($0.cityID) }
+    }
+
+    mutating func removeForces(for playerID: WorldPlayerID) {
+        armies.removeAll { $0.ownerID == playerID }
+        units.removeAll { $0.ownerID == playerID }
+    }
+
+    mutating func markFinished() {
+        phase = .finished
+    }
 }
