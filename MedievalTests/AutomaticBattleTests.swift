@@ -19,7 +19,7 @@ struct AutomaticBattleTests {
     }
 
     @Test func archersDealDamageBeforeMeleeUnits() throws {
-        let result = try AutomaticBattle.resolve(attackers: [unit("archer", hp: 7, type: "archers")], defenders: [unit("infantry", hp: 3)], definitions: definitions, seed: 1).get()
+        let result = try AutomaticBattle.resolve(attackers: [unit("archer", hp: 7, type: "archers")], defenders: [unit("infantry", hp: 1)], definitions: definitions, seed: 1).get()
         #expect(result.rounds.count == 1)
         #expect(result.outcome == .victory(.attacker))
         #expect(result.attackerSurvivors.first?.hitPoints == 7)
@@ -57,6 +57,28 @@ struct AutomaticBattleTests {
         #expect(AutomaticBattle.resolve(attackers: [], defenders: [unit("d", hp: 10)], definitions: definitions, seed: 1) == .failure(.emptyArmy(.attacker)))
         #expect(AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [], definitions: definitions, seed: 1) == .failure(.emptyArmy(.defender)))
         #expect(AutomaticBattle.resolve(attackers: [unit("a", hp: 10, type: "dragons")], defenders: [unit("d", hp: 10)], definitions: definitions, seed: 1) == .failure(.missingDefinition("dragons")))
+    }
+
+    @Test func defenseModifierReducesDamageAndIsReported() throws {
+        let context = BattleContext(defenderModifiers: [BattleModifier(kind: .terrain, percent: 50)])
+        let unmodified = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 20)], definitions: definitions, seed: 2).get()
+        let defended = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 20)], definitions: definitions, seed: 2, context: context).get()
+
+        #expect(defended.context.defenderDamageReduction == 50)
+        #expect(defended.context.defenderModifiers.first?.kind == .terrain)
+        // Same seed, same armies: only the modifier can explain the difference.
+        #expect(defended.rounds[0].attackerDamage < unmodified.rounds[0].attackerDamage)
+        #expect(defended.rounds[0].defenderDamage == unmodified.rounds[0].defenderDamage)
+    }
+
+    @Test func theRollBonusHelpsTheSideItIsGivenTo() throws {
+        let attacking = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 40)], definitions: definitions, seed: 5, context: BattleContext(attackerRollBonus: 4)).get()
+        let neutral = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 40)], definitions: definitions, seed: 5).get()
+        let defending = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 40)], definitions: definitions, seed: 5, context: BattleContext(defenderRollBonus: 4)).get()
+
+        #expect(attacking.rounds[0].attackerDamage > neutral.rounds[0].attackerDamage)
+        #expect(defending.rounds[0].attackerDamage < neutral.rounds[0].attackerDamage)
+        #expect(defending.rounds[0].defenderDamage > neutral.rounds[0].defenderDamage)
     }
 
     private let definitions = [

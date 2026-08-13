@@ -47,6 +47,48 @@ public struct BattleRound: Codable, Equatable, Sendable {
     }
 }
 
+/// Where a defence bonus came from.
+///
+/// The report stores the kind rather than a display string, because battle
+/// reports are saved with the match: a label written into the save would freeze
+/// the language the match was played in.
+public enum BattleModifierKind: String, Codable, Equatable, Sendable {
+    case terrain
+    case river
+    case fortifications
+    case garrison
+}
+
+public struct BattleModifier: Codable, Equatable, Sendable {
+    public let kind: BattleModifierKind
+    public let percent: Int
+
+    public init(kind: BattleModifierKind, percent: Int) {
+        self.kind = kind
+        self.percent = percent
+    }
+}
+
+public struct BattleContext: Codable, Equatable, Sendable {
+    public let attackerRollBonus: Int
+    public let defenderRollBonus: Int
+    public let defenderModifiers: [BattleModifier]
+
+    public init(attackerRollBonus: Int = 0, defenderRollBonus: Int = 0, defenderModifiers: [BattleModifier] = []) {
+        self.attackerRollBonus = attackerRollBonus
+        self.defenderRollBonus = defenderRollBonus
+        self.defenderModifiers = defenderModifiers
+    }
+
+    /// Never reaches 100%: a defender who cannot be hurt at all would make a
+    /// fortified city unwinnable rather than expensive.
+    public var defenderDamageReduction: Int {
+        min(Self.maximumReduction, max(-Self.maximumReduction, defenderModifiers.reduce(0) { $0 + $1.percent }))
+    }
+
+    private static let maximumReduction = 90
+}
+
 public struct BattleResult: Codable, Equatable, Sendable {
     public let outcome: BattleOutcome
     public let rounds: [BattleRound]
@@ -54,6 +96,7 @@ public struct BattleResult: Codable, Equatable, Sendable {
     public let defenderInitial: [BattleUnitState]
     public let attackerSurvivors: [BattleUnitState]
     public let defenderSurvivors: [BattleUnitState]
+    public let context: BattleContext
 
     public init(
         outcome: BattleOutcome,
@@ -61,7 +104,8 @@ public struct BattleResult: Codable, Equatable, Sendable {
         attackerInitial: [BattleUnitState],
         defenderInitial: [BattleUnitState],
         attackerSurvivors: [BattleUnitState],
-        defenderSurvivors: [BattleUnitState]
+        defenderSurvivors: [BattleUnitState],
+        context: BattleContext
     ) {
         self.outcome = outcome
         self.rounds = rounds
@@ -69,6 +113,7 @@ public struct BattleResult: Codable, Equatable, Sendable {
         self.defenderInitial = defenderInitial
         self.attackerSurvivors = attackerSurvivors
         self.defenderSurvivors = defenderSurvivors
+        self.context = context
     }
 
     public var attackerLosses: [UnitID] { attackerInitial.map(\.id).filter { id in !attackerSurvivors.contains(where: { $0.id == id }) } }
@@ -96,6 +141,11 @@ public enum AutomaticBattle {
     /// A battle ends when one side is wiped out; the cap only exists so two
     /// armies that cannot finish each other off still terminate.
     private static let maximumRounds = 100
+    /// How much damage one point of advantage on the round roll is worth.
+    private static let percentPerRollPoint = 5
+    /// Caps what the roll alone can swing, so a lucky round cannot decide a
+    /// battle that army composition should decide.
+    private static let maximumRollSwing = 45
 
     /// Resolves a battle to completion without any UI, timers or frames.
     ///
@@ -106,11 +156,11 @@ public enum AutomaticBattle {
     /// fielding. Damage is allocated to the weakest surviving defender first and
     /// spills over into the next one, so no damage is wasted on overkill.
     ///
-    /// The per-round rolls are drawn from `seed` and recorded on each
-    /// `BattleRound`. They do not alter damage here: the modifier layer that
-    /// consumes them (terrain, fortification) arrives with battle context, and
-    /// the sequence is fixed now so that adding it does not renumber existing
-    /// saved battles.
+    /// Each round both sides roll from `seed`; the difference between the rolls
+    /// swings damage by `percentPerRollPoint` per point, bounded by
+    /// `maximumRollSwing`. `context` biases those rolls and reduces the damage
+    /// reaching the defender, and travels on the result so the report can name
+    /// every bonus that was in play.
     ///
     /// The result is a pure function of its arguments — same armies, same
     /// definitions and same seed always produce the same rounds and survivors.
@@ -118,7 +168,8 @@ public enum AutomaticBattle {
         attackers: [Unit],
         defenders: [Unit],
         definitions: [UnitDefinition],
-        seed: UInt64
+        seed: UInt64,
+        context: BattleContext = BattleContext()
     ) -> Result<BattleResult, AutomaticBattleError> {
         guard !attackers.isEmpty else { return .failure(.emptyArmy(.attacker)) }
         guard !defenders.isEmpty else { return .failure(.emptyArmy(.defender)) }
@@ -144,15 +195,18 @@ public enum AutomaticBattle {
         // so the termination conditions are spelled out here instead.
         while rounds.count < maximumRounds, !living(attackerHP).isEmpty, !living(defenderHP).isEmpty {
             let number = rounds.count + 1
-            let attackerRoll = Int(generator.next() % 10)
-            let defenderRoll = Int(generator.next() % 10)
+            let attackerRoll = Int(generator.next() % 10) + context.attackerRollBonus
+            let defenderRoll = Int(generator.next() % 10) + context.defenderRollBonus
+            let rollModifier = min(maximumRollSwing, max(-maximumRollSwing, (attackerRoll - defenderRoll) * percentPerRollPoint))
             var attackerDamage = 0
             var defenderDamage = 0
             var destroyed: [UnitID] = []
 
             for ranged in [true, false] {
-                let attackerStage = damage(from: attackers, hp: attackerHP, definitions: definitionByID, ranged: ranged)
-                let defenderStage = damage(from: defenders, hp: defenderHP, definitions: definitionByID, ranged: ranged)
+                let attackerBase = damage(from: attackers, hp: attackerHP, definitions: definitionByID, ranged: ranged)
+                let defenderBase = damage(from: defenders, hp: defenderHP, definitions: definitionByID, ranged: ranged)
+                let attackerStage = adjusted(attackerBase, percent: rollModifier - context.defenderDamageReduction)
+                let defenderStage = adjusted(defenderBase, percent: -rollModifier)
                 attackerDamage += attackerStage
                 defenderDamage += defenderStage
                 destroyed += apply(attackerStage, to: &defenderHP)
@@ -172,7 +226,7 @@ public enum AutomaticBattle {
         } else {
             .draw
         }
-        return .success(BattleResult(outcome: outcome, rounds: rounds, attackerInitial: attackerInitial, defenderInitial: defenderInitial, attackerSurvivors: attackerSurvivors, defenderSurvivors: defenderSurvivors))
+        return .success(BattleResult(outcome: outcome, rounds: rounds, attackerInitial: attackerInitial, defenderInitial: defenderInitial, attackerSurvivors: attackerSurvivors, defenderSurvivors: defenderSurvivors, context: context))
     }
 
     private static func damage(from units: [Unit], hp: [UnitID: Int], definitions: [UnitTypeID: UnitDefinition], ranged: Bool) -> Int {
@@ -201,6 +255,10 @@ public enum AutomaticBattle {
     private static func firstDuplicateID(in units: [Unit]) -> UnitID? {
         var seen: Set<UnitID> = []
         return units.first { !seen.insert($0.id).inserted }?.id
+    }
+
+    private static func adjusted(_ damage: Int, percent: Int) -> Int {
+        max(0, Int((Double(damage) * Double(100 + percent) / 100).rounded()))
     }
 
     private static func survivors(_ initial: [BattleUnitState], hp: [UnitID: Int]) -> [BattleUnitState] {
