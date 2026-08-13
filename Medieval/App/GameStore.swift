@@ -18,6 +18,8 @@ final class GameStore: ObservableObject {
     @Published private(set) var saves: [SaveMetadata] = []
     @Published private(set) var saveError: String?
     private let saveCatalog: any GameSaveCatalog
+    private let autosaveService: AutosaveService
+    private var autosaveGeneration = 0
 
     init(
         state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
@@ -30,6 +32,7 @@ final class GameStore: ObservableObject {
         world = loadedContent.scenario.world
         economy = EconomyState(players: loadedContent.scenario.world.players, startingGold: loadedContent.scenario.startingGold)
         self.saveCatalog = saveCatalog
+        autosaveService = AutosaveService(catalog: saveCatalog)
         refreshSaves()
     }
 
@@ -43,6 +46,10 @@ final class GameStore: ObservableObject {
 
     var journalItems: [JournalItem] {
         state.journal.enumerated().map { JournalItem(entry: $0.element, index: $0.offset, players: state.players) }
+    }
+
+    var resumableAutosave: SaveMetadata? {
+        saves.first { $0.kind == .autosave }
     }
 
     @discardableResult
@@ -81,11 +88,13 @@ final class GameStore: ObservableObject {
         economy = resolution.economy
         let delta = resolution.entries.map(\.amount).reduce(0, +)
         present("Економіку підраховано: \(delta >= 0 ? "+" : "")\(delta) монет.", severity: .success)
+        scheduleAutosave()
     }
 
     func endTurn() {
         if send(.endTurn(playerID: state.activePlayer.id)) {
             selectedHexID = nil
+            scheduleAutosave()
         }
     }
 
@@ -95,6 +104,7 @@ final class GameStore: ObservableObject {
         {
             world.resetMovementCommands(for: playerID)
             present("Хід гравця \(state.activePlayer.displayName) розпочато.", severity: .information)
+            scheduleAutosave()
         }
     }
 
@@ -149,6 +159,7 @@ final class GameStore: ObservableObject {
             present("Столицю засновано. Хід наступного гравця.", severity: .success)
         }
         selectedHexID = nil
+        scheduleAutosave()
     }
 
     func resetMapCamera() {
@@ -180,6 +191,7 @@ final class GameStore: ObservableObject {
         pendingEncounter = resolution.encounter
         selectedHexID = resolution.encounter?.destination ?? previewRoute.hexIDs.last
         clearMovementPreview()
+        scheduleAutosave()
     }
 
     func resolvePendingBattle() {
@@ -200,6 +212,7 @@ final class GameStore: ObservableObject {
         battleReport = report
         pendingEncounter = nil
         present("Бій завершено. Звіт додано до журналу.", severity: .success)
+        scheduleAutosave()
     }
 
     func dismissBattleReport() {
@@ -210,6 +223,10 @@ final class GameStore: ObservableObject {
         criticalNotice = nil
     }
 
+    /// Rereads the catalog. Called for actions the player took deliberately —
+    /// saving, deleting, opening the panel — which already do their file work
+    /// here, so the list is refreshed in step with them. The autosave path uses
+    /// the actor instead, because it fires on its own and must not stall a turn.
     func refreshSaves() {
         saves = saveCatalog.list()
     }
@@ -308,6 +325,45 @@ final class GameStore: ObservableObject {
     }
 
     private static let retainedNotices = 50
+
+    /// Writes the match down without making the player wait for it.
+    ///
+    /// Each attempt carries a number so the service can drop one that has been
+    /// overtaken: several actions in quick succession start several tasks, and
+    /// tasks are not delivered in the order they were created, so an older match
+    /// could otherwise land on disk after a newer one.
+    private func scheduleAutosave() {
+        // A finished match is not something to resume. Leaving the last
+        // autosave in place would have the menu offer to continue a game that
+        // already has a winner.
+        guard state.phase != .finished else {
+            let generation = nextAutosaveGeneration()
+            Task { [autosaveService] in
+                await autosaveService.discard(generation: generation)
+                saves = await autosaveService.list()
+            }
+            return
+        }
+        let document = GameSaveDocument(
+            id: GameSaveDocument.autosaveID,
+            name: "Автозбереження",
+            kind: .autosave,
+            game: state,
+            world: world,
+            economy: economy,
+            selectedHexID: selectedHexID
+        )
+        let generation = nextAutosaveGeneration()
+        Task { [autosaveService] in
+            await autosaveService.save(document, generation: generation)
+            saves = await autosaveService.list()
+        }
+    }
+
+    private func nextAutosaveGeneration() -> Int {
+        autosaveGeneration += 1
+        return autosaveGeneration
+    }
 
     private static func loadBundledContent() -> GameContentConfiguration {
         do {

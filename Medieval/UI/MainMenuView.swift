@@ -11,12 +11,26 @@ struct MainMenuView: View {
     @State private var colors = PlayerColor.allCases
     @State private var errorMessage: String?
     @State private var showsSaves = false
+    @State private var dismissedAutosave = false
 
     var body: some View {
         VStack(spacing: 22) {
             Spacer()
             Text("MEDIEVAL").font(.system(size: 56, weight: .bold, design: .serif)).foregroundStyle(.brown)
             Text("Покрокова стратегія для одного Mac").foregroundStyle(.secondary)
+            if let autosave = game.resumableAutosave, !dismissedAutosave, !isCreatingGame {
+                VStack(spacing: 8) {
+                    Text("Продовжити незавершену партію?").font(.headline)
+                    Text("Хід \(autosave.turn) · \(autosave.updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Button("Продовжити") { onLoadGame(autosave.id) }.buttonStyle(.borderedProminent)
+                        Button("Не зараз") { dismissedAutosave = true }
+                    }
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            }
             if isCreatingGame { wizard } else { menu }
             if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
             Spacer()

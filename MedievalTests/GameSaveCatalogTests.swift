@@ -81,6 +81,29 @@ struct GameSaveCatalogTests {
         #expect(catalog.list().isEmpty)
     }
 
+    @Test func autosaveUsesDedicatedSlotWithoutReplacingManualSave() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let catalog = FileGameSaveCatalog(directory: directory)
+        let manual = makeDocument(name: "Manual")
+        let worldPlayers = manual.world.players
+        let autosave = GameSaveDocument(
+            id: GameSaveDocument.autosaveID,
+            name: "Autosave",
+            kind: .autosave,
+            game: manual.game,
+            world: manual.world,
+            economy: EconomyState(players: worldPlayers, startingGold: 120)
+        )
+
+        try catalog.save(manual)
+        try catalog.save(autosave)
+
+        #expect(Set(catalog.list().map(\.kind)) == [.manual, .autosave])
+        let loadedManual = try catalog.load(manual.metadata.id)
+        #expect(loadedManual.metadata.name == "Manual")
+    }
+
     private func makeDocument(name: String) -> GameSaveDocument {
         let worldPlayers = [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")]
         let game = GameState(players: [Player(displayName: "One", worldPlayerID: "one"), Player(displayName: "Two", worldPlayerID: "two")], seed: 42)

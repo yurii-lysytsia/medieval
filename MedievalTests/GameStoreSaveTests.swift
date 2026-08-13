@@ -4,7 +4,7 @@ import Testing
 
 /// A catalog that keeps saves in memory, so these tests never touch the folder
 /// the player's real matches live in.
-private final class InMemorySaveCatalog: GameSaveCatalog, @unchecked Sendable {
+final class InMemorySaveCatalog: GameSaveCatalog, @unchecked Sendable {
     private var documents: [UUID: GameSaveDocument] = [:]
     var failsNextLoad = false
 
@@ -100,4 +100,77 @@ struct GameStoreSaveTests {
         // Only the notice announcing the load itself.
         #expect(store.notices.count == 1)
     }
+}
+
+@MainActor
+struct AutosaveTests {
+    @Test func anOvertakenAutosaveIsDroppedInsteadOfLandingOutOfOrder() async throws {
+        // Several actions in a row start several tasks, and tasks are not
+        // delivered in the order they were created. Without the generation
+        // check, an earlier match state could be written after a later one.
+        let catalog = InMemorySaveCatalog()
+        let service = AutosaveService(catalog: catalog)
+        let older = makeAutosave(turn: 1)
+        let newer = makeAutosave(turn: 9)
+
+        let applied = await service.save(newer, generation: 2)
+        let overtaken = await service.save(older, generation: 1)
+
+        #expect(applied)
+        #expect(!overtaken)
+
+        #expect(try catalog.load(GameSaveDocument.autosaveID).game.turn == 9)
+    }
+
+    @Test func endingAMatchRemovesTheAutosaveSoNothingOffersToResumeIt() async throws {
+        let catalog = InMemorySaveCatalog()
+        let service = AutosaveService(catalog: catalog)
+        let applied = await service.save(makeAutosave(turn: 3), generation: 1)
+        #expect(applied)
+
+        await service.discard(generation: 2)
+
+        #expect(throws: GameSaveError.missingSave(GameSaveDocument.autosaveID)) {
+            try catalog.load(GameSaveDocument.autosaveID)
+        }
+    }
+
+    @Test func theAutosaveNeverTakesOverAManualSlot() async throws {
+        let catalog = InMemorySaveCatalog()
+        let service = AutosaveService(catalog: catalog)
+        let manual = GameSaveDocument(name: "Ручне", game: makeGame(turn: 2), world: makeWorld(), economy: makeEconomy())
+        try catalog.save(manual)
+
+        let applied = await service.save(makeAutosave(turn: 5), generation: 1)
+        let listed = await service.list()
+
+        #expect(applied)
+        #expect(try catalog.load(manual.metadata.id).metadata.name == "Ручне")
+        #expect(listed.count == 2)
+    }
+
+    private func makeAutosave(turn: Int) -> GameSaveDocument {
+        GameSaveDocument(
+            id: GameSaveDocument.autosaveID,
+            name: "Автозбереження",
+            kind: .autosave,
+            game: makeGame(turn: turn),
+            world: makeWorld(),
+            economy: makeEconomy()
+        )
+    }
+
+    private func makeGame(turn: Int) -> GameState {
+        GameState(players: [Player(displayName: "One", worldPlayerID: "one"), Player(displayName: "Two", worldPlayerID: "two")], seed: 42, turn: turn)
+    }
+
+    private func makeWorld() -> WorldState {
+        WorldState(players: worldPlayers, hexes: [], phase: .economy)
+    }
+
+    private func makeEconomy() -> EconomyState {
+        EconomyState(players: worldPlayers, startingGold: 100)
+    }
+
+    private let worldPlayers = [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")]
 }
