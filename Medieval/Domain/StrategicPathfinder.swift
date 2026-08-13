@@ -37,12 +37,15 @@ public enum StrategicPathfinder {
         world: WorldState,
         terrain: [TerrainDefinition]
     ) -> [HexID: MovementRoute] {
-        guard budget >= 0, map.hexes.contains(where: { $0.id == origin }) else { return [:] }
         // Keeping the first entry per key: a duplicate is content validation's
         // business to report, and pathfinding should not trap on one mid-match.
         let neighbors = Dictionary(map.neighborhoods.map { ($0.hexID, $0.neighborHexIDs) }) { first, _ in first }
         let terrainByID = Dictionary(terrain.map { ($0.id, $0) }) { first, _ in first }
         let hexByID = Dictionary(world.hexes.map { ($0.id, $0) }) { first, _ in first }
+        guard budget >= 0,
+              let originHex = hexByID[origin],
+              canOccupy(originHex, domain: domain, terrainByID: terrainByID)
+        else { return [:] }
         var routes: [HexID: MovementRoute] = [origin: MovementRoute(hexIDs: [origin], cost: 0)]
         var frontier: [HexID] = [origin]
 
@@ -96,6 +99,17 @@ public enum StrategicPathfinder {
             // Water costs what the content says it costs, like land does.
             guard definition.domain.isWater else { return nil }
             return definition.movementCost
+        }
+    }
+
+    /// Whether a mover of this domain may stand on the hex at all. Applied to
+    /// the origin, so a ship beached on land offers no routes rather than
+    /// pretending it can sail from where it is.
+    private static func canOccupy(_ hex: Hex, domain: MovementDomain, terrainByID: [TerrainID: TerrainDefinition]) -> Bool {
+        guard let definition = terrainByID[hex.terrainID] else { return false }
+        switch domain {
+        case .land: return definition.domain != .deepWater && definition.isPassable
+        case .naval: return definition.domain.isWater
         }
     }
 

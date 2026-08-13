@@ -148,6 +148,11 @@ struct GameScreen: View {
             } else {
                 Text("Виберіть гекс на мапі.").foregroundStyle(.secondary)
             }
+            if let encounter = game.pendingEncounter {
+                Divider()
+                Label("Бій: \(encounter.attackerID.rawValue) → \(encounter.defenderID.rawValue)", systemImage: "burst.fill")
+                    .foregroundStyle(.red)
+            }
             Spacer()
         }
         .frame(width: 230)
