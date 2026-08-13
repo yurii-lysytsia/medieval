@@ -27,6 +27,8 @@ public enum MatchResult: Codable, Equatable, Sendable {
 public enum MatchJournalEvent: Codable, Equatable, Sendable {
     case playerEliminated(playerID: UUID)
     case matchFinished(MatchResult)
+    case armyMoved(armyID: ArmyID, from: HexID, to: HexID, cost: Int)
+    case encounterStarted(attackerID: ArmyID, defenderID: ArmyID, hexID: HexID)
 }
 
 public struct MatchJournalEntry: Codable, Equatable, Sendable {
@@ -142,6 +144,10 @@ public struct GameState: Codable, Equatable, Sendable {
             phase = .finished
             journal.append(MatchJournalEntry(turn: turn, phase: .finished, event: .matchFinished(result)))
         }
+    }
+
+    mutating func record(_ event: MatchJournalEvent) {
+        journal.append(MatchJournalEntry(turn: turn, phase: phase, event: event))
     }
 }
 
