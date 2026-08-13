@@ -7,6 +7,7 @@ final class GameScene: SKScene {
     private let turnLabel = SKLabelNode(fontNamed: "SF Pro Rounded")
     private let mapLayer = SKNode()
     private let riverLayer = SKNode()
+    private let routeLayer = SKNode()
     private let cityLayer = SKNode()
     private let armyLayer = SKNode()
     private let mapContainer = SKNode()
@@ -47,6 +48,7 @@ final class GameScene: SKScene {
         addChild(mapContainer)
         mapContainer.addChild(mapLayer)
         mapContainer.addChild(riverLayer)
+        mapContainer.addChild(routeLayer)
         mapContainer.addChild(cityLayer)
         mapContainer.addChild(armyLayer)
     }
@@ -59,10 +61,10 @@ final class GameScene: SKScene {
         }
     }
 
-    func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, cameraResetToken: Int) {
+    func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>, previewRoute: MovementRoute?, cameraResetToken: Int) {
         titleLabel.text = map.displayName
         turnLabel.text = "Раунд \(state.turn) · \(state.activePlayer.displayName) · \(phaseName(state.phase))"
-        drawMap(map, world: world, selectedHexID: selectedHexID)
+        drawMap(map, world: world, selectedHexID: selectedHexID, reachableHexIDs: reachableHexIDs, encounterHexIDs: encounterHexIDs, previewRoute: previewRoute)
         if lastCameraResetToken != cameraResetToken {
             lastCameraResetToken = cameraResetToken
             resetCamera()
@@ -155,6 +157,20 @@ final class GameScene: SKScene {
             riverLayer.addChild(water)
         }
         updateRiverLineWidths()
+
+        if let previewRoute {
+            let path = CGMutablePath()
+            for (index, id) in previewRoute.hexIDs.enumerated() {
+                guard let center = hexCenters[id] else { continue }
+                if index == 0 { path.move(to: center) } else { path.addLine(to: center) }
+            }
+            let line = SKShapeNode(path: path)
+            line.strokeColor = .init(red: 1, green: 0.84, blue: 0.28, alpha: 1)
+            line.lineWidth = 7 / zoom
+            line.lineCap = .round
+            line.zPosition = 3
+            routeLayer.addChild(line)
+        }
 
         for city in world.cities {
             guard let center = hexCenters[city.hexID] else { continue }

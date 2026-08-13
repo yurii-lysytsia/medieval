@@ -6,6 +6,8 @@ final class GameStore: ObservableObject {
     @Published private(set) var state: GameState
     @Published private(set) var content: GameContentConfiguration
     @Published private(set) var selectedHexID: HexID?
+    @Published private(set) var movementPreview: MovementPreview?
+    @Published private(set) var previewRoute: MovementRoute?
     @Published private(set) var cameraResetToken = 0
 
     init(
@@ -39,6 +41,29 @@ final class GameStore: ObservableObject {
 
     func selectHex(_ id: HexID?) {
         selectedHexID = id
+        guard state.phase == .movement, let id else {
+            clearMovementPreview()
+            return
+        }
+        if let movementPreview, let route = movementPreview.routes[id] {
+            previewRoute = route
+            return
+        }
+        guard let playerID = state.activePlayer.worldPlayerID,
+              let army = content.scenario.world.armies.first(where: { $0.hexID == id && $0.ownerID == playerID })
+        else {
+            clearMovementPreview()
+            return
+        }
+        movementPreview = MovementPreviewRules.preview(
+            armyID: army.id,
+            playerID: playerID,
+            world: content.scenario.world,
+            map: content.scenario.map,
+            terrain: content.terrain,
+            units: content.units
+        )
+        previewRoute = nil
     }
 
     func resetMapCamera() {
@@ -48,7 +73,13 @@ final class GameStore: ObservableObject {
     func startNewGame() {
         content = Self.loadBundledContent()
         selectedHexID = nil
+        clearMovementPreview()
         state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName, worldPlayerID: $0.id) })
+    }
+
+    private func clearMovementPreview() {
+        movementPreview = nil
+        previewRoute = nil
     }
 
     private static func loadBundledContent() -> GameContentConfiguration {
