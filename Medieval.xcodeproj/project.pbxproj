@@ -6,30 +6,7 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		12F5CADA811AF8AAD01D3EAF /* MedievalDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		1F7A3E3AAC4CD1925E2A9C6D /* MedievalDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; };
-		2C522556DFCCDF3C4FCAD4B5 /* MedievalDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; };
-		60CAABAD55C6C67CD0BF2DCA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E22FA8EE86F02742AEB62826 /* Cocoa.framework */; };
-		7E0878C9D71E3A18189C7822 /* MedievalDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; };
-		FB0E1EC3B1D3826DC58C2FA4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E22FA8EE86F02742AEB62826 /* Cocoa.framework */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
-		39A8162DBB3C3464286283F1 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 918B22A860806A20C88BA438;
-			remoteInfo = MedievalDomain;
-		};
-		5A213896355486CCB0297BB0 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 918B22A860806A20C88BA438;
-			remoteInfo = MedievalDomain;
-		};
 		5BE025FC302DE650006D078F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
@@ -44,13 +21,6 @@
 			remoteGlobalIDString = 5BE01A21302CCE00006D078F;
 			remoteInfo = Medieval;
 		};
-		DD1E5B9D3F21ED94A6C8E68E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 918B22A860806A20C88BA438;
-			remoteInfo = MedievalDomain;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,7 +30,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				12F5CADA811AF8AAD01D3EAF /* MedievalDomain.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -68,7 +37,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MedievalDomain.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BE01A22302CCE00006D078F /* Medieval.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Medieval.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BE025F8302DE650006D078F /* MedievalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MedievalTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BE02605302DE66D006D078F /* MedievalTestsUI.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MedievalTestsUI.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -79,48 +47,26 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5BE01A24302CCE00006D078F /* Medieval */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = Medieval;
 			sourceTree = "<group>";
 		};
 		5BE025F9302DE650006D078F /* MedievalTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = MedievalTests;
 			sourceTree = "<group>";
 		};
 		5BE02606302DE66D006D078F /* MedievalTestsUI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = MedievalTestsUI;
-			sourceTree = "<group>";
-		};
-		A9C507D43CA3A648D542F177 /* MedievalDomain */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			path = MedievalDomain;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		1F885FDD95FEDEFFF29F5883 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				FB0E1EC3B1D3826DC58C2FA4 /* Cocoa.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		5BE01A1F302CCE00006D078F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2C522556DFCCDF3C4FCAD4B5 /* MedievalDomain.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,7 +74,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1F7A3E3AAC4CD1925E2A9C6D /* MedievalDomain.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -150,7 +95,6 @@
 				5BE02606302DE66D006D078F /* MedievalTestsUI */,
 				5BE01A23302CCE00006D078F /* Products */,
 				8732D07189A3FC2C9481DE8D /* Frameworks */,
-				A9C507D43CA3A648D542F177 /* MedievalDomain */,
 			);
 			sourceTree = "<group>";
 		};
@@ -158,7 +102,6 @@
 			isa = PBXGroup;
 			children = (
 				5BE01A22302CCE00006D078F /* Medieval.app */,
-				474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */,
 				DA90F5EFE0661ABAFEE8C7B1 /* MedievalDomainTests.xctest */,
 				5BE025F8302DE650006D078F /* MedievalTests.xctest */,
 				5BE02605302DE66D006D078F /* MedievalTestsUI.xctest */,
@@ -184,16 +127,6 @@
 		};
 /* End PBXGroup section */
 
-/* Begin PBXHeadersBuildPhase section */
-		FE5FFF47A914F38396BC3148 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXHeadersBuildPhase section */
-
 /* Begin PBXNativeTarget section */
 		5BE01A21302CCE00006D078F /* Medieval */ = {
 			isa = PBXNativeTarget;
@@ -207,7 +140,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				2BD9FB63F7DAE2D493F2F8E9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5BE01A24302CCE00006D078F /* Medieval */,
@@ -229,7 +161,6 @@
 			);
 			dependencies = (
 				5BE025FD302DE650006D078F /* PBXTargetDependency */,
-				542F030661A259B180EADC2B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				5BE025F9302DE650006D078F /* MedievalTests */,
@@ -259,27 +190,6 @@
 			productName = MedievalTestsUI;
 			productReference = 5BE02605302DE66D006D078F /* MedievalTestsUI.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
-		};
-		918B22A860806A20C88BA438 /* MedievalDomain */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 330ADDCFEF765AA1E47ACA73 /* Build configuration list for PBXNativeTarget "MedievalDomain" */;
-			buildPhases = (
-				FE5FFF47A914F38396BC3148 /* Headers */,
-				A1F7EDED256D14991D1A18B0 /* Sources */,
-				1F885FDD95FEDEFFF29F5883 /* Frameworks */,
-				960D51E80039365729ECA1BF /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				A9C507D43CA3A648D542F177 /* MedievalDomain */,
-			);
-			name = MedievalDomain;
-			productName = MedievalDomain;
-			productReference = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */;
-			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -320,7 +230,6 @@
 			targets = (
 				5BE01A21302CCE00006D078F /* Medieval */,
 				5BE025F7302DE650006D078F /* MedievalTests */,
-				918B22A860806A20C88BA438 /* MedievalDomain */,
 				5BE02604302DE66D006D078F /* MedievalTestsUI */,
 			);
 		};
@@ -342,13 +251,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		5BE02603302DE66D006D078F /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		960D51E80039365729ECA1BF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -379,28 +281,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A1F7EDED256D14991D1A18B0 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		2BD9FB63F7DAE2D493F2F8E9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MedievalDomain;
-			target = 918B22A860806A20C88BA438 /* MedievalDomain */;
-			targetProxy = 5A213896355486CCB0297BB0 /* PBXContainerItemProxy */;
-		};
-		542F030661A259B180EADC2B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MedievalDomain;
-			target = 918B22A860806A20C88BA438 /* MedievalDomain */;
-			targetProxy = DD1E5B9D3F21ED94A6C8E68E /* PBXContainerItemProxy */;
-		};
 		5BE025FD302DE650006D078F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5BE01A21302CCE00006D078F /* Medieval */;
@@ -414,87 +297,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		3F473DB71D6C7319B445D0ED /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = XAU3F58R7T;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_TESTABILITY = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalDomain;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Release;
-		};
-		405F09B1E264433E8B0FFDBA /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = XAU3F58R7T;
-				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalDomainTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 6.0;
-			};
-			name = Release;
-		};
-		5697B2721DE77C04675BC9BB /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = XAU3F58R7T;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalDomain;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Debug;
-		};
 		5BE01A34302CCE01006D078F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -763,37 +565,9 @@
 			};
 			name = Release;
 		};
-		5C8C400EB2A559E3BCA25087 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = XAU3F58R7T;
-				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalDomainTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SWIFT_VERSION = 6.0;
-			};
-			name = Debug;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		330ADDCFEF765AA1E47ACA73 /* Build configuration list for PBXNativeTarget "MedievalDomain" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				3F473DB71D6C7319B445D0ED /* Release */,
-				5697B2721DE77C04675BC9BB /* Debug */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		5BE01A1D302CCE00006D078F /* Build configuration list for PBXProject "Medieval" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
