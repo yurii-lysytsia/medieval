@@ -1,7 +1,9 @@
+import AppKit
 import SwiftUI
 
 struct RootView: View {
     @ObservedObject var coordinator: AppCoordinator
+    @State private var showsJournal = false
 
     var body: some View {
         switch coordinator.route {
@@ -79,7 +81,11 @@ struct GameScreen: View {
             if let report = coordinator.game.battleReport {
                 battleReport(report)
             }
+            if let notice = coordinator.game.criticalNotice {
+                criticalNotice(notice)
+            }
         }
+        .sheet(isPresented: $showsJournal) { journalView }
     }
 
     private var handoffScreen: some View {
@@ -127,6 +133,7 @@ struct GameScreen: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            Button("Вийти з гри") { NSApplication.shared.terminate(nil) }
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -176,6 +183,47 @@ struct GameScreen: View {
         case .victory(.defender): "Переміг захисник"
         case .draw: "Обидві сторони знищено"
         }
+    }
+
+    private var journalView: some View {
+        NavigationStack {
+            List {
+                Section("Повідомлення") {
+                    ForEach(coordinator.game.notices.reversed()) { notice in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(notice.text)
+                            Text("Хід \(notice.turn) · \(notice.phase.rawValue) · \(notice.date.formatted(date: .omitted, time: .shortened))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                Section("Події партії") {
+                    ForEach(coordinator.game.journalItems.reversed()) { item in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(item.text)
+                            Text("Хід \(item.turn) · \(item.phase.rawValue)")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Журнал подій")
+            .frame(minWidth: 560, minHeight: 420)
+        }
+    }
+
+    private func criticalNotice(_ notice: GameNotice) -> some View {
+        VStack(spacing: 12) {
+            Label("Дія не виконана", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline).foregroundStyle(.red)
+            Text(notice.text)
+            Button("Зрозуміло") { coordinator.game.dismissCriticalNotice() }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(20)
+        .frame(width: 360)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(radius: 16)
     }
 
     private func playerColor(_ color: PlayerColor) -> Color {
