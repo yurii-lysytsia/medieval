@@ -43,28 +43,8 @@ struct GameScreen: View {
 
     private var playBoard: some View {
         VStack(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Medieval")
-                        .font(.title2.weight(.bold))
-                    Text("Стратегічна гра")
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button(game.state.phase == .combat ? "Завершити хід" : "Наступна фаза") {
-                    if game.state.phase == .combat {
-                        game.endTurn()
-                    } else {
-                        game.advancePhase()
-                    }
-                }
-                .keyboardShortcut(.return, modifiers: [])
-                Button("Огляд мапи") {
-                    game.resetMapCamera()
-                }
-                Button("До меню", action: onShowMenu)
-            }
-            .padding()
+            turnHUD
+                .padding()
 
             Divider()
 
@@ -86,6 +66,74 @@ struct GameScreen: View {
                 mapInspector
             }
         }
+    }
+
+    /// Who is playing, what phase they are in, what it costs, and what to do
+    /// next — the row is laid out so it stays legible when the window is at its
+    /// minimum width: the hint truncates first, the controls never do.
+    private var turnHUD: some View {
+        let hud = game.hud
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                turnHUDStatus(hud)
+                Divider().frame(height: 32)
+                turnHUDCoins(hud)
+                Text(hud.hint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                Spacer(minLength: 12)
+                turnHUDControls(hud)
+            }
+            HStack(spacing: 12) {
+                turnHUDStatus(hud)
+                turnHUDCoins(hud)
+                Spacer(minLength: 8)
+                turnHUDControls(hud)
+            }
+        }
+    }
+
+    private func turnHUDStatus(_ hud: TurnHUDSnapshot) -> some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(playerColor(hud.playerColor))
+                .frame(width: 16, height: 16)
+                .accessibilityLabel("Колір гравця")
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(hud.playerName) · хід \(hud.turn)")
+                    .font(.headline)
+                Text(hud.phaseTitle)
+                    .foregroundStyle(.secondary)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func turnHUDCoins(_ hud: TurnHUDSnapshot) -> some View {
+        Label("\(hud.coins)", systemImage: "dollarsign.circle.fill")
+            .font(.headline)
+            .foregroundStyle(.yellow)
+            .accessibilityLabel("Монети: \(hud.coins)")
+    }
+
+    private func turnHUDControls(_ hud: TurnHUDSnapshot) -> some View {
+        HStack {
+            Button("Скасувати вибір") { game.cancelSelection() }
+                .disabled(game.selectedHexID == nil)
+            Button(game.state.phase == .combat ? "Завершити хід" : "Наступна фаза") {
+                if game.state.phase == .combat {
+                    game.endTurn()
+                } else {
+                    game.advancePhase()
+                }
+            }
+            .keyboardShortcut(.return, modifiers: [])
+            .disabled(!hud.canAdvance)
+            Button("Огляд мапи") { game.resetMapCamera() }
+            Button("До меню", action: onShowMenu)
+        }
+        .fixedSize()
     }
 
     private var handoffScreen: some View {
@@ -217,6 +265,15 @@ struct GameScreen: View {
         case .river: "Річка"
         case .fortifications: "Укріплення"
         case .garrison: "Гарнізон"
+        }
+    }
+
+    private func playerColor(_ color: PlayerColor) -> Color {
+        switch color {
+        case .red: .red
+        case .blue: .blue
+        case .green: .green
+        case .gold: .yellow
         }
     }
 }

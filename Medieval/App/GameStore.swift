@@ -6,6 +6,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var state: GameState
     @Published private(set) var content: GameContentConfiguration
     @Published private(set) var world: WorldState
+    @Published private(set) var economy: EconomyState
     @Published private(set) var selectedHexID: HexID?
     @Published private(set) var movementPreview: MovementPreview?
     @Published private(set) var previewRoute: MovementRoute?
@@ -21,6 +22,11 @@ final class GameStore: ObservableObject {
         self.state = state
         self.content = loadedContent
         world = loadedContent.scenario.world
+        economy = EconomyState(players: loadedContent.scenario.world.players, startingGold: loadedContent.scenario.startingGold)
+    }
+
+    var hud: TurnHUDSnapshot {
+        TurnHUDSnapshot(state: state, economy: economy, hasBlockingPresentation: battleReport != nil || pendingEncounter != nil)
     }
 
     @discardableResult
@@ -32,8 +38,27 @@ final class GameStore: ObservableObject {
     }
 
     func advancePhase() {
-        guard battleReport == nil else { return }
-        send(.advancePhase(playerID: state.activePlayer.id))
+        guard hud.canAdvance else { return }
+        guard state.phase == .economy, let playerID = state.activePlayer.worldPlayerID else {
+            send(.advancePhase(playerID: state.activePlayer.id))
+            return
+        }
+        // Income and upkeep are settled on the way out of the economy phase, so
+        // nobody can walk past their own upkeep. If the economy cannot resolve —
+        // a content reference it cannot follow — the phase stays put: advancing
+        // anyway would quietly cost the player a turn's income.
+        guard case let .success(resolution) = EconomyRules.resolve(
+            for: playerID,
+            in: world,
+            economy: economy,
+            terrain: content.terrain,
+            cityLevels: content.cityLevels,
+            units: content.units,
+            buildings: content.buildings
+        ) else { return }
+        guard send(.advancePhase(playerID: state.activePlayer.id)) else { return }
+        world = resolution.world
+        economy = resolution.economy
     }
 
     func endTurn() {
@@ -102,6 +127,11 @@ final class GameStore: ObservableObject {
         cameraResetToken += 1
     }
 
+    func cancelSelection() {
+        selectedHexID = nil
+        clearMovementPreview()
+    }
+
     func confirmMovement() {
         guard let armyID = movementPreview?.armyID, let previewRoute else { return }
         let result = StrategicMovementRules.confirmArmyMovement(
@@ -162,6 +192,7 @@ final class GameStore: ObservableObject {
             WorldPlayer(id: WorldPlayerID(rawValue: "player-\(index + 1)"), displayName: choice.name)
         }
         world.configurePlayers(worldPlayers)
+        economy = EconomyState(players: worldPlayers, startingGold: content.scenario.startingGold)
         let players = worldPlayers.enumerated().map { index, worldPlayer in
             Player(displayName: choices[index].name, worldPlayerID: worldPlayer.id, color: choices[index].color)
         }
