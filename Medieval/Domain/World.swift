@@ -189,12 +189,14 @@ public struct City: Codable, Equatable, Sendable, Identifiable {
     public let ownerID: WorldPlayerID?
     public let hexID: HexID
     public let levelID: CityLevelID
+    public let isCapital: Bool
 
-    public init(id: CityID, ownerID: WorldPlayerID?, hexID: HexID, levelID: CityLevelID) {
+    public init(id: CityID, ownerID: WorldPlayerID?, hexID: HexID, levelID: CityLevelID, isCapital: Bool = false) {
         self.id = id
         self.ownerID = ownerID
         self.hexID = hexID
         self.levelID = levelID
+        self.isCapital = isCapital
     }
 }
 
@@ -212,6 +214,11 @@ public struct Building: Codable, Equatable, Sendable, Identifiable {
 
 public enum GamePhase: String, Codable, Equatable, Sendable {
     case setup
+    case capitalPlacement
+    case economy
+    case construction
+    case movement
+    case combat
     case playerTurn
     case resolvingTurn
     case finished
@@ -219,13 +226,13 @@ public enum GamePhase: String, Codable, Equatable, Sendable {
 
 /// The rendering-independent representation of a playable world.
 public struct WorldState: Codable, Equatable, Sendable {
-    public let players: [WorldPlayer]
-    public let hexes: [Hex]
-    public let riverBoundaries: [RiverBoundary]
-    public let armies: [Army]
-    public let cities: [City]
-    public let buildings: [Building]
-    public let phase: GamePhase
+    public private(set) var players: [WorldPlayer]
+    public private(set) var hexes: [Hex]
+    public private(set) var riverBoundaries: [RiverBoundary]
+    public private(set) var armies: [Army]
+    public private(set) var cities: [City]
+    public private(set) var buildings: [Building]
+    public private(set) var phase: GamePhase
 
     public init(
         players: [WorldPlayer],
@@ -276,5 +283,12 @@ public struct WorldState: Codable, Equatable, Sendable {
 
     public func riverBoundary(between firstHexID: HexID, and secondHexID: HexID) -> RiverBoundary? {
         riverBoundaries.first { $0.boundary.connects(firstHexID, secondHexID) }
+    }
+
+    mutating func addCapital(for playerID: WorldPlayerID, at hexID: HexID, levelID: CityLevelID) {
+        cities.append(City(id: CityID(rawValue: "capital-\(playerID.rawValue)"), ownerID: playerID, hexID: hexID, levelID: levelID, isCapital: true))
+        if cities.filter(\.isCapital).count == players.count {
+            phase = .economy
+        }
     }
 }

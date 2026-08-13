@@ -295,49 +295,10 @@
           }
         }
       ],
-      "armies": [
-        {
-          "id": "crown-army",
-          "ownerID": "crown",
-          "hexID": "h-0-0",
-          "unitTypeID": "spearmen",
-          "quantity": 4
-        },
-        {
-          "id": "union-army",
-          "ownerID": "union",
-          "hexID": "h-1-1",
-          "unitTypeID": "archers",
-          "quantity": 4
-        }
-      ],
-      "cities": [
-        {
-          "id": "crown-city",
-          "ownerID": "crown",
-          "hexID": "h-0-0",
-          "levelID": "town"
-        },
-        {
-          "id": "union-city",
-          "ownerID": "union",
-          "hexID": "h-1-1",
-          "levelID": "town"
-        }
-      ],
-      "buildings": [
-        {
-          "id": "crown-market",
-          "cityID": "crown-city",
-          "typeID": "market"
-        },
-        {
-          "id": "union-barracks",
-          "cityID": "union-city",
-          "typeID": "barracks"
-        }
-      ],
-      "phase": "setup"
+      "armies": [],
+      "cities": [],
+      "buildings": [],
+      "phase": "capitalPlacement"
     }
   }
 }
