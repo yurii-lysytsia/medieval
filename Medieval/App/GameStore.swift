@@ -10,6 +10,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var movementPreview: MovementPreview?
     @Published private(set) var previewRoute: MovementRoute?
     @Published private(set) var pendingEncounter: PendingEncounter?
+    @Published private(set) var battleReport: BattleResult?
     @Published private(set) var cameraResetToken = 0
 
     init(
@@ -31,6 +32,7 @@ final class GameStore: ObservableObject {
     }
 
     func advancePhase() {
+        guard battleReport == nil else { return }
         send(.advancePhase(playerID: state.activePlayer.id))
     }
 
@@ -98,12 +100,36 @@ final class GameStore: ObservableObject {
         clearMovementPreview()
     }
 
+    func resolvePendingBattle() {
+        guard let encounter = pendingEncounter,
+              let attacker = world.armies.first(where: { $0.id == encounter.attackerID }),
+              let defender = world.armies.first(where: { $0.id == encounter.defenderID })
+        else { return }
+        let attackers = attacker.unitIDs.compactMap { id in world.units.first(where: { $0.id == id }) }
+        let defenders = defender.unitIDs.compactMap { id in world.units.first(where: { $0.id == id }) }
+        let context = BattleContextRules.context(attacker: attacker, defender: defender, destination: encounter.destination, world: world, terrain: content.terrain, units: content.units, buildings: content.buildings)
+        let seed = AutomaticBattle.seed(match: state.seed, turn: state.turn, encounter: encounter)
+        guard case let .success(report) = AutomaticBattle.resolve(attackers: attackers, defenders: defenders, definitions: content.units, seed: seed, context: context) else { return }
+        var journaledGame = state
+        journaledGame.record(.battleResolved(report))
+        guard case let .success(resolution) = BattleConsequences.apply(report, encounter: encounter, game: journaledGame, world: world) else { return }
+        state = resolution.game
+        world = resolution.world
+        battleReport = report
+        pendingEncounter = nil
+    }
+
+    func dismissBattleReport() {
+        battleReport = nil
+    }
+
     func startNewGame() {
         content = Self.loadBundledContent()
         world = content.scenario.world
         selectedHexID = nil
         clearMovementPreview()
         pendingEncounter = nil
+        battleReport = nil
         state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName, worldPlayerID: $0.id) }, phase: world.phase)
     }
 

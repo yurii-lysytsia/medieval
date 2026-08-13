@@ -1,3 +1,4 @@
+import Foundation
 @testable import Medieval
 import Testing
 
@@ -81,11 +82,33 @@ struct AutomaticBattleTests {
         #expect(defending.rounds[0].defenderDamage > neutral.rounds[0].defenderDamage)
     }
 
+    @Test func everyEncounterInATurnGetsItsOwnRolls() {
+        // Seeding from the match and the turn alone gave two battles fought in
+        // the same turn an identical roll sequence.
+        let first = PendingEncounter(attackerID: "a1", defenderID: "d1", destination: "north", route: MovementRoute(hexIDs: ["home", "north"], cost: 1))
+        let second = PendingEncounter(attackerID: "a2", defenderID: "d2", destination: "south", route: MovementRoute(hexIDs: ["home", "south"], cost: 1))
+
+        #expect(AutomaticBattle.seed(match: 9, turn: 3, encounter: first) != AutomaticBattle.seed(match: 9, turn: 3, encounter: second))
+        #expect(AutomaticBattle.seed(match: 9, turn: 3, encounter: first) != AutomaticBattle.seed(match: 9, turn: 4, encounter: first))
+        // Replaying the same match has to fight the same battles.
+        #expect(AutomaticBattle.seed(match: 9, turn: 3, encounter: first) == AutomaticBattle.seed(match: 9, turn: 3, encounter: first))
+        #expect(AutomaticBattle.seed(match: 9, turn: 3, encounter: first) == 0xE8B9_8D1B_6AD8_9A9D)
+    }
+
+    @Test func battleReportPersistsInsideGameJournal() throws {
+        let report = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 10)], definitions: definitions, seed: 42).get()
+        var game = GameState(players: [Player(displayName: "One"), Player(displayName: "Two")], seed: 42, phase: .combat)
+        game.record(.battleResolved(report))
+        let restored = try JSONDecoder().decode(GameState.self, from: JSONEncoder().encode(game))
+        #expect(restored.journal.last?.event == .battleResolved(report))
+    }
+
     private let definitions = [
         UnitDefinition(id: "infantry", displayName: "Infantry", recruitmentCost: 20, upkeep: 2, hitPoints: 10, damage: 4, attackRange: 1, movement: 2, domain: .land),
         UnitDefinition(id: "archers", displayName: "Archers", recruitmentCost: 25, upkeep: 2, hitPoints: 7, damage: 3, attackRange: 3, movement: 2, domain: .land),
     ]
-    private func unit(_ id: UnitID, hp: Int, type: UnitTypeID = "infantry") -> Unit {
-        Unit(id: id, ownerID: id.rawValue.hasPrefix("a") ? "one" : "two", typeID: type, currentHitPoints: hp, location: .hex("h"))
+    // Spelled out because `import Foundation` also puts a `Unit` in scope.
+    private func unit(_ id: UnitID, hp: Int, type: UnitTypeID = "infantry") -> Medieval.Unit {
+        Medieval.Unit(id: id, ownerID: id.rawValue.hasPrefix("a") ? "one" : "two", typeID: type, currentHitPoints: hp, location: .hex("h"))
     }
 }

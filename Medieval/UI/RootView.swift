@@ -33,6 +33,15 @@ struct GameScreen: View {
     }
 
     private var playScreen: some View {
+        ZStack {
+            playBoard
+            if let report = game.battleReport {
+                battleReport(report)
+            }
+        }
+    }
+
+    private var playBoard: some View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -152,10 +161,54 @@ struct GameScreen: View {
                 Divider()
                 Label("Бій: \(encounter.attackerID.rawValue) → \(encounter.defenderID.rawValue)", systemImage: "burst.fill")
                     .foregroundStyle(.red)
+                Button("Розрахувати бій") {
+                    game.resolvePendingBattle()
+                }
+                .buttonStyle(.borderedProminent)
             }
             Spacer()
         }
         .frame(width: 230)
         .padding()
+    }
+
+    private func battleReport(_ report: BattleResult) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Звіт автоматичного бою").font(.title2.bold())
+            Text("Раундів: \(report.rounds.count)")
+            Text("Сили: \(report.attackerInitial.count) проти \(report.defenderInitial.count)")
+            Text("Втрати: \(report.attackerLosses.count) / \(report.defenderLosses.count)")
+            ForEach(Array(report.context.defenderModifiers.enumerated()), id: \.offset) { _, modifier in
+                Text("\(modifierName(modifier.kind)): +\(modifier.percent)% оборони")
+            }
+            Text(reportOutcome(report.outcome)).font(.headline)
+            Button("Продовжити") { game.dismissBattleReport() }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(24)
+        .frame(width: 390)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .shadow(radius: 20)
+    }
+
+    private func reportOutcome(_ outcome: BattleOutcome) -> String {
+        switch outcome {
+        case .victory(.attacker): "Переміг атакувальник"
+        case .victory(.defender): "Переміг захисник"
+        // Not always mutual destruction: a battle that runs into the round cap
+        // also ends without a winner, with both armies still on the map.
+        case .draw: "Жодна сторона не перемогла"
+        }
+    }
+
+    /// The report stores what a bonus was, not what to call it, so the wording
+    /// lives here in the interface rather than inside a saved match.
+    private func modifierName(_ kind: BattleModifierKind) -> String {
+        switch kind {
+        case .terrain: "Місцевість"
+        case .river: "Річка"
+        case .fortifications: "Укріплення"
+        case .garrison: "Гарнізон"
+        }
     }
 }

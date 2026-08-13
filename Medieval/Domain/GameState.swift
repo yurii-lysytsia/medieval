@@ -29,6 +29,7 @@ public enum MatchJournalEvent: Codable, Equatable, Sendable {
     case matchFinished(MatchResult)
     case armyMoved(armyID: ArmyID, from: HexID, to: HexID, cost: Int)
     case encounterStarted(attackerID: ArmyID, defenderID: ArmyID, hexID: HexID)
+    case battleResolved(BattleResult)
 }
 
 public struct MatchJournalEntry: Codable, Equatable, Sendable {

@@ -229,6 +229,21 @@ public enum AutomaticBattle {
         return .success(BattleResult(outcome: outcome, rounds: rounds, attackerInitial: attackerInitial, defenderInitial: defenderInitial, attackerSurvivors: attackerSurvivors, defenderSurvivors: defenderSurvivors, context: context))
     }
 
+    /// Derives the seed for one battle from the match and the encounter itself.
+    ///
+    /// Mixing in only the turn would hand every battle fought in the same turn
+    /// the same rolls. The fold is spelled out rather than reaching for
+    /// `hashValue`, because Swift seeds its hashing per process and a replayed
+    /// match has to produce the battles it produced the first time.
+    public static func seed(match: UInt64, turn: Int, encounter: PendingEncounter) -> UInt64 {
+        let text = "\(turn):\(encounter.attackerID.rawValue)>\(encounter.defenderID.rawValue)@\(encounter.destination.rawValue)"
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in text.utf8 {
+            hash = (hash ^ UInt64(byte)) &* 0x0000_0100_0000_01B3
+        }
+        return match ^ hash
+    }
+
     private static func damage(from units: [Unit], hp: [UnitID: Int], definitions: [UnitTypeID: UnitDefinition], ranged: Bool) -> Int {
         units.filter { (hp[$0.id] ?? 0) > 0 && ((definitions[$0.typeID]?.attackRange ?? 0) > 1) == ranged }
             .reduce(0) { $0 + (definitions[$1.typeID]?.damage ?? 0) }
