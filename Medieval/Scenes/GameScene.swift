@@ -6,6 +6,7 @@ final class GameScene: SKScene {
     private let titleLabel = SKLabelNode(fontNamed: "Palatino-Bold")
     private let turnLabel = SKLabelNode(fontNamed: "SF Pro Rounded")
     private let mapLayer = SKNode()
+    private let riverLayer = SKNode()
     private let cityLayer = SKNode()
     private let armyLayer = SKNode()
     private let mapContainer = SKNode()
@@ -45,6 +46,7 @@ final class GameScene: SKScene {
 
         addChild(mapContainer)
         mapContainer.addChild(mapLayer)
+        mapContainer.addChild(riverLayer)
         mapContainer.addChild(cityLayer)
         mapContainer.addChild(armyLayer)
     }
@@ -116,7 +118,7 @@ final class GameScene: SKScene {
 
     private func drawMap(_ map: StaticHexMap, world: WorldState, selectedHexID: HexID?) {
         lastDrawn = (map, world, selectedHexID)
-        [mapLayer, cityLayer, armyLayer].forEach { $0.removeAllChildren() }
+        [mapLayer, riverLayer, cityLayer, armyLayer].forEach { $0.removeAllChildren() }
         hexCenters = [:]
 
         for hex in map.hexes {
@@ -133,6 +135,26 @@ final class GameScene: SKScene {
         if let selectedHexID, let center = hexCenters[selectedHexID] {
             mapLayer.addChild(selectionHighlight(at: center))
         }
+
+        for river in world.riverBoundaries {
+            guard let firstCenter = hexCenters[river.boundary.firstHexID],
+                  let secondCenter = hexCenters[river.boundary.secondHexID],
+                  let path = riverPath(between: firstCenter, and: secondCenter)
+            else { continue }
+
+            let border = SKShapeNode(path: path)
+            border.name = "river:border"
+            border.strokeColor = .init(red: 0.03, green: 0.12, blue: 0.17, alpha: 0.95)
+            border.lineCap = .round
+            riverLayer.addChild(border)
+
+            let water = SKShapeNode(path: path)
+            water.name = "river:water"
+            water.strokeColor = .init(red: 0.40, green: 0.84, blue: 0.94, alpha: 1)
+            water.lineCap = .round
+            riverLayer.addChild(water)
+        }
+        updateRiverLineWidths()
 
         for city in world.cities {
             guard let center = hexCenters[city.hexID] else { continue }
@@ -158,6 +180,7 @@ final class GameScene: SKScene {
     private func resetCamera() {
         zoom = 1
         mapContainer.setScale(zoom)
+        updateRiverLineWidths()
         mapContainer.position = .zero
         clampMapPosition()
     }
@@ -183,6 +206,7 @@ final class GameScene: SKScene {
         }
         zoom = clamped
         mapContainer.setScale(zoom)
+        updateRiverLineWidths()
         clampMapPosition()
     }
 
@@ -244,6 +268,25 @@ final class GameScene: SKScene {
         return path
     }
 
+    private func riverPath(between first: CGPoint, and second: CGPoint) -> CGPath? {
+        let delta = CGPoint(x: second.x - first.x, y: second.y - first.y)
+        let length = hypot(delta.x, delta.y)
+        guard length > 0 else { return nil }
+
+        let midpoint = CGPoint(x: (first.x + second.x) / 2, y: (first.y + second.y) / 2)
+        let halfEdge = CGPoint(x: -delta.y / length * hexRadius / 2, y: delta.x / length * hexRadius / 2)
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: midpoint.x - halfEdge.x, y: midpoint.y - halfEdge.y))
+        path.addLine(to: CGPoint(x: midpoint.x + halfEdge.x, y: midpoint.y + halfEdge.y))
+        return path
+    }
+
+    private func updateRiverLineWidths() {
+        for node in riverLayer.children.compactMap({ $0 as? SKShapeNode }) {
+            node.lineWidth = (node.name == "river:border" ? 11 : 6) / zoom
+        }
+    }
+
     /// One colour per terrain type in the MVP content.
     ///
     /// The fallback exists only for terrain the content adds without a colour
@@ -251,15 +294,15 @@ final class GameScene: SKScene {
     /// should never show up in a shipped map.
     private func terrainColor(_ id: TerrainID) -> SKColor {
         switch id.rawValue {
-        case "plains": .init(red: 0.35, green: 0.51, blue: 0.25, alpha: 1)
-        case "desert": .init(red: 0.76, green: 0.68, blue: 0.42, alpha: 1)
+        case "plains": .init(red: 0.53, green: 0.67, blue: 0.27, alpha: 1)
+        case "desert": .init(red: 0.81, green: 0.62, blue: 0.29, alpha: 1)
         case "forest": .init(red: 0.18, green: 0.42, blue: 0.22, alpha: 1)
         case "hills": .init(red: 0.48, green: 0.39, blue: 0.23, alpha: 1)
         case "mountains": .init(red: 0.42, green: 0.43, blue: 0.46, alpha: 1)
-        case "swamp": .init(red: 0.30, green: 0.35, blue: 0.22, alpha: 1)
-        case "shallows": .init(red: 0.28, green: 0.53, blue: 0.63, alpha: 1)
-        case "deep-water": .init(red: 0.12, green: 0.29, blue: 0.48, alpha: 1)
-        default: .init(red: 0.55, green: 0.20, blue: 0.55, alpha: 1)
+        case "swamp": .init(red: 0.25, green: 0.37, blue: 0.30, alpha: 1)
+        case "shallows": .init(red: 0.28, green: 0.63, blue: 0.70, alpha: 1)
+        case "deep-water": .init(red: 0.10, green: 0.25, blue: 0.52, alpha: 1)
+        default: .magenta
         }
     }
 }
