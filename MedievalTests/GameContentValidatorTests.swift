@@ -23,12 +23,12 @@ struct GameContentValidatorTests {
     }
 
     @Test func missingReferencesAreRejectedWhileLoading() throws {
-        let army = Army(id: "army-1", ownerID: "one", hexID: "land", unitTypeID: "missing", quantity: 1)
-        let configuration = fixture(world: world(armies: [army]))
+        let unit = Unit(id: "unit-1", ownerID: "one", typeID: "missing", currentHitPoints: 1, location: .hex("land"))
+        let configuration = fixture(world: world(units: [unit]))
 
         let error = try validationError(for: configuration)
 
-        #expect(error == .missingReference(entity: "army", id: "army-1", reference: "unit type"))
+        #expect(error == .missingReference(entity: "unit instance", id: "unit-1", reference: "unit type"))
     }
 
     @Test func invalidNumericRangesAreRejectedWhileLoading() throws {
@@ -51,8 +51,9 @@ struct GameContentValidatorTests {
     }
 
     @Test func unitsOnImpassableHexesAreRejectedWhileLoading() throws {
-        let army = Army(id: "army-1", ownerID: "one", hexID: "sea", unitTypeID: "spearmen", quantity: 1)
-        let configuration = fixture(world: world(hexes: [oceanHex()], armies: [army]))
+        let unit = Unit(id: "unit-1", ownerID: "one", typeID: "spearmen", currentHitPoints: 10, location: .hex("sea"))
+        let army = Army(id: "army-1", ownerID: "one", hexID: "sea", unitIDs: ["unit-1"])
+        let configuration = fixture(world: world(hexes: [oceanHex()], units: [unit], armies: [army]))
 
         let error = try validationError(for: configuration)
 
@@ -269,6 +270,7 @@ struct GameContentValidatorTests {
     private func world(
         hexes: [Hex]? = nil,
         riverBoundaries: [RiverBoundary] = [],
+        units: [MedievalDomain.Unit] = [],
         armies: [Army] = [],
         cities: [City] = []
     ) -> WorldState {
@@ -276,6 +278,7 @@ struct GameContentValidatorTests {
             players: [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")],
             hexes: hexes ?? [landHex()],
             riverBoundaries: riverBoundaries,
+            units: units,
             armies: armies,
             cities: cities
         )

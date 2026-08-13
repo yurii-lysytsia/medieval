@@ -178,7 +178,7 @@ public enum UnitCondition: String, Codable, Equatable, Sendable {
 public enum UnitLocation: Codable, Equatable, Sendable {
     case hex(HexID)
     case garrison(CityID)
-    case cargo(ArmyID)
+    case cargo(UnitID)
 }
 
 public struct Unit: Codable, Equatable, Sendable, Identifiable {
@@ -210,15 +210,24 @@ public struct Army: Codable, Equatable, Sendable, Identifiable {
     public let id: ArmyID
     public let ownerID: WorldPlayerID
     public let hexID: HexID
-    public let unitTypeID: UnitTypeID
-    public let quantity: Int
+    public let unitIDs: [UnitID]
+    public let hasMoved: Bool
+    public let embarkedOnShipID: UnitID?
 
-    public init(id: ArmyID, ownerID: WorldPlayerID, hexID: HexID, unitTypeID: UnitTypeID, quantity: Int) {
+    public init(
+        id: ArmyID,
+        ownerID: WorldPlayerID,
+        hexID: HexID,
+        unitIDs: [UnitID],
+        hasMoved: Bool = false,
+        embarkedOnShipID: UnitID? = nil
+    ) {
         self.id = id
         self.ownerID = ownerID
         self.hexID = hexID
-        self.unitTypeID = unitTypeID
-        self.quantity = quantity
+        self.unitIDs = unitIDs
+        self.hasMoved = hasMoved
+        self.embarkedOnShipID = embarkedOnShipID
     }
 }
 
@@ -349,5 +358,23 @@ public struct WorldState: Codable, Equatable, Sendable {
 
     mutating func addUnit(_ unit: Unit) {
         units.append(unit)
+    }
+
+    mutating func replaceUnit(_ unit: Unit) {
+        guard let index = units.firstIndex(where: { $0.id == unit.id }) else { return }
+        units[index] = unit
+    }
+
+    mutating func addArmy(_ army: Army) {
+        armies.append(army)
+    }
+
+    mutating func replaceArmy(_ army: Army) {
+        guard let index = armies.firstIndex(where: { $0.id == army.id }) else { return }
+        armies[index] = army
+    }
+
+    mutating func removeArmy(_ armyID: ArmyID) {
+        armies.removeAll { $0.id == armyID }
     }
 }

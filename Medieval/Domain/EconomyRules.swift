@@ -159,13 +159,15 @@ public enum EconomyRules {
             }
         }
 
-        for army in world.armies where army.ownerID == playerID {
-            guard let unit = units.first(where: { $0.id == army.unitTypeID }) else {
-                return .failure(.missingDefinition("unit \(army.unitTypeID.rawValue)"))
-            }
-            let upkeep = unit.upkeep * army.quantity
-            if upkeep > 0 {
-                entries.append(entry(playerID, .armyUpkeep, "army:\(army.id.rawValue)", -upkeep))
+        for unit in world.units where unit.ownerID == playerID && unit.condition != .destroyed {
+            guard case .garrison = unit.location else {
+                guard let definition = units.first(where: { $0.id == unit.typeID }) else {
+                    return .failure(.missingDefinition("unit \(unit.typeID.rawValue)"))
+                }
+                if definition.upkeep > 0 {
+                    entries.append(entry(playerID, .armyUpkeep, "unit:\(unit.id.rawValue)", -definition.upkeep))
+                }
+                continue
             }
         }
 

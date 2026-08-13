@@ -57,6 +57,7 @@ public enum GameContentValidator {
         try validateUnique(world.hexes.map(\.id.rawValue), entity: "hex")
         try validateUnique(world.riverBoundaries.map(\.id.rawValue), entity: "river boundary")
         try validateUnique(world.armies.map(\.id.rawValue), entity: "army")
+        try validateUnique(world.armies.flatMap(\.unitIDs).map(\.rawValue), entity: "army unit membership")
         try validateUnique(world.cities.map(\.id.rawValue), entity: "city")
         try validateUnique(world.buildings.map(\.id.rawValue), entity: "building")
     }
@@ -90,7 +91,7 @@ public enum GameContentValidator {
             try validateMinimum(building.upkeep, field: "building \(building.id.rawValue) upkeep", minimum: 0)
         }
         for army in configuration.scenario.world.armies {
-            try validateMinimum(army.quantity, field: "army \(army.id.rawValue) quantity", minimum: 1)
+            try validateMinimum(army.unitIDs.count, field: "army \(army.id.rawValue) unit count", minimum: 1)
         }
     }
 
@@ -109,6 +110,7 @@ public enum GameContentValidator {
         let cityIDs = Set(world.cities.map(\.id))
         let map = configuration.scenario.map
         let mapHexIDs = Set(map.hexes.map(\.id))
+        let worldUnitByID = Dictionary(uniqueKeysWithValues: world.units.map { ($0.id, $0) })
 
         for level in configuration.cityLevels {
             for buildingID in level.requiredBuildingIDs {
@@ -204,13 +206,23 @@ public enum GameContentValidator {
             }
         }
         for army in world.armies {
+            guard Set(army.unitIDs).count == army.unitIDs.count, army.unitIDs.count <= ArmyOperations.maximumLandUnits else {
+                throw GameContentValidationError.invalidNumber(field: "army \(army.id.rawValue) unit count", value: army.unitIDs.count, minimum: 1)
+            }
             try validateReference(army.ownerID, in: playerIDs, entity: "army", id: army.id.rawValue, reference: "owner")
-            try validateReference(army.unitTypeID, in: unitIDs, entity: "army", id: army.id.rawValue, reference: "unit type")
             guard let hex = hexByID[army.hexID] else {
                 throw GameContentValidationError.missingReference(entity: "army", id: army.id.rawValue, reference: "hex \"\(army.hexID.rawValue)\"")
             }
             guard terrainByID[hex.terrainID]?.isPassable == true else {
                 throw GameContentValidationError.impassablePlacement(entity: "Army \"\(army.id.rawValue)\"", hexID: hex.id)
+            }
+            for unitID in army.unitIDs {
+                guard let unit = worldUnitByID[unitID] else {
+                    throw GameContentValidationError.missingReference(entity: "army", id: army.id.rawValue, reference: "unit \"\(unitID.rawValue)\"")
+                }
+                guard unit.ownerID == army.ownerID else {
+                    throw GameContentValidationError.missingReference(entity: "army", id: army.id.rawValue, reference: "owned unit \"\(unitID.rawValue)\"")
+                }
             }
         }
         for unit in world.units {
@@ -220,8 +232,13 @@ public enum GameContentValidator {
             guard unit.currentHitPoints > 0, unit.currentHitPoints <= definition.hitPoints || definition.domain == .navalTransport else {
                 throw GameContentValidationError.invalidNumber(field: "unit \(unit.id.rawValue) current hit points", value: unit.currentHitPoints, minimum: 1)
             }
-            if case let .hex(hexID) = unit.location, hexByID[hexID] == nil {
-                throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "hex \"\(hexID.rawValue)\"")
+            if case let .hex(hexID) = unit.location {
+                guard let hex = hexByID[hexID] else {
+                    throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "hex \"\(hexID.rawValue)\"")
+                }
+                if definition.domain == .land, hex.terrainID == "deep-water" {
+                    throw GameContentValidationError.impassablePlacement(entity: "Unit \"\(unit.id.rawValue)\"", hexID: hexID)
+                }
             }
             if case let .garrison(cityID) = unit.location {
                 guard let city = world.cities.first(where: { $0.id == cityID }) else {
@@ -229,6 +246,14 @@ public enum GameContentValidator {
                 }
                 guard city.ownerID == unit.ownerID else {
                     throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "owned garrison city \"\(cityID.rawValue)\"")
+                }
+            }
+            if case let .cargo(shipID) = unit.location {
+                guard let ship = worldUnitByID[shipID],
+                      configuration.units.first(where: { $0.id == ship.typeID })?.domain == .navalTransport,
+                      ship.ownerID == unit.ownerID
+                else {
+                    throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "owned transport ship \"\(shipID.rawValue)\"")
                 }
             }
         }
