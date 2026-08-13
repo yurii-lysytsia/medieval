@@ -3,6 +3,18 @@
 Native macOS 2D strategy game. The app uses SwiftUI for its shell and SpriteKit
 for the game board. Game rules live in a UI-independent domain module.
 
+## Architecture
+
+`Medieval/Domain` is the `MedievalDomain` Swift package: game rules and state,
+with no UI dependencies. The app target links it as a package product rather
+than compiling those sources itself, so the boundary is enforced by the
+compiler — app code reaches the rules only through `import MedievalDomain` and
+only through the module's `public` surface.
+
+`EXCLUDED_SOURCE_FILE_NAMES` keeps `Medieval/Domain` out of the app target's
+synchronized file group. New rule files dropped into that folder join the
+package automatically and need no project changes.
+
 ## Requirements
 
 - macOS 14 (Sonoma) or newer

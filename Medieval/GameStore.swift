@@ -1,4 +1,5 @@
 import Combine
+import MedievalDomain
 
 @MainActor
 final class GameStore: ObservableObject {
