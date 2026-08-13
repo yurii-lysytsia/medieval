@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		12F5CADA811AF8AAD01D3EAF /* MedievalDomain.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1F7A3E3AAC4CD1925E2A9C6D /* MedievalDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; };
 		2C522556DFCCDF3C4FCAD4B5 /* MedievalDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; };
 		60CAABAD55C6C67CD0BF2DCA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E22FA8EE86F02742AEB62826 /* Cocoa.framework */; };
 		7E0878C9D71E3A18189C7822 /* MedievalDomain.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */; };
@@ -23,6 +24,27 @@
 			remoteInfo = MedievalDomain;
 		};
 		5A213896355486CCB0297BB0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 918B22A860806A20C88BA438;
+			remoteInfo = MedievalDomain;
+		};
+		5BE025FC302DE650006D078F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5BE01A21302CCE00006D078F;
+			remoteInfo = Medieval;
+		};
+		5BE0260B302DE66D006D078F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5BE01A21302CCE00006D078F;
+			remoteInfo = Medieval;
+		};
+		DD1E5B9D3F21ED94A6C8E68E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5BE01A1A302CCE00006D078F /* Project object */;
 			proxyType = 1;
@@ -48,6 +70,8 @@
 /* Begin PBXFileReference section */
 		474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MedievalDomain.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BE01A22302CCE00006D078F /* Medieval.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Medieval.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5BE025F8302DE650006D078F /* MedievalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MedievalTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5BE02605302DE66D006D078F /* MedievalTestsUI.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MedievalTestsUI.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA90F5EFE0661ABAFEE8C7B1 /* MedievalDomainTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MedievalDomainTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E22FA8EE86F02742AEB62826 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
@@ -60,18 +84,25 @@
 			path = Medieval;
 			sourceTree = "<group>";
 		};
-		A9C507D43CA3A648D542F177 /* Medieval/Domain */ = {
+		5BE025F9302DE650006D078F /* MedievalTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 			);
-			path = Medieval/Domain;
+			path = MedievalTests;
 			sourceTree = "<group>";
 		};
-		EA63A19D0515772AE96E8AB9 /* Tests/MedievalDomainTests */ = {
+		5BE02606302DE66D006D078F /* MedievalTestsUI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 			);
-			path = Tests/MedievalDomainTests;
+			path = MedievalTestsUI;
+			sourceTree = "<group>";
+		};
+		A9C507D43CA3A648D542F177 /* MedievalDomain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = MedievalDomain;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -93,12 +124,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7DFA3C4AE39A819750F0D674 /* Frameworks */ = {
+		5BE025F5302DE650006D078F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				60CAABAD55C6C67CD0BF2DCA /* Cocoa.framework in Frameworks */,
-				7E0878C9D71E3A18189C7822 /* MedievalDomain.framework in Frameworks */,
+				1F7A3E3AAC4CD1925E2A9C6D /* MedievalDomain.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BE02602302DE66D006D078F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,10 +146,11 @@
 			isa = PBXGroup;
 			children = (
 				5BE01A24302CCE00006D078F /* Medieval */,
+				5BE025F9302DE650006D078F /* MedievalTests */,
+				5BE02606302DE66D006D078F /* MedievalTestsUI */,
 				5BE01A23302CCE00006D078F /* Products */,
 				8732D07189A3FC2C9481DE8D /* Frameworks */,
-				A9C507D43CA3A648D542F177 /* Medieval/Domain */,
-				EA63A19D0515772AE96E8AB9 /* Tests/MedievalDomainTests */,
+				A9C507D43CA3A648D542F177 /* MedievalDomain */,
 			);
 			sourceTree = "<group>";
 		};
@@ -122,6 +160,8 @@
 				5BE01A22302CCE00006D078F /* Medieval.app */,
 				474DE1AF30A6122D71310FE2 /* MedievalDomain.framework */,
 				DA90F5EFE0661ABAFEE8C7B1 /* MedievalDomainTests.xctest */,
+				5BE025F8302DE650006D078F /* MedievalTests.xctest */,
+				5BE02605302DE66D006D078F /* MedievalTestsUI.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -155,27 +195,6 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		274C7D161C9520597DFDCB49 /* MedievalDomainTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 045824D86E11C23814C570C2 /* Build configuration list for PBXNativeTarget "MedievalDomainTests" */;
-			buildPhases = (
-				EDBDE8237EA0F7241CA224FF /* Sources */,
-				7DFA3C4AE39A819750F0D674 /* Frameworks */,
-				013728FEC31B7F76AF8A772F /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				349682008F6CB8A1CCD4EE48 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				EA63A19D0515772AE96E8AB9 /* Tests/MedievalDomainTests */,
-			);
-			name = MedievalDomainTests;
-			productName = MedievalDomainTests;
-			productReference = DA90F5EFE0661ABAFEE8C7B1 /* MedievalDomainTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		5BE01A21302CCE00006D078F /* Medieval */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5BE01A36302CCE01006D078F /* Build configuration list for PBXNativeTarget "Medieval" */;
@@ -198,6 +217,49 @@
 			productReference = 5BE01A22302CCE00006D078F /* Medieval.app */;
 			productType = "com.apple.product-type.application";
 		};
+		5BE025F7302DE650006D078F /* MedievalTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5BE02600302DE650006D078F /* Build configuration list for PBXNativeTarget "MedievalTests" */;
+			buildPhases = (
+				5BE025F4302DE650006D078F /* Sources */,
+				5BE025F5302DE650006D078F /* Frameworks */,
+				5BE025F6302DE650006D078F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5BE025FD302DE650006D078F /* PBXTargetDependency */,
+				542F030661A259B180EADC2B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5BE025F9302DE650006D078F /* MedievalTests */,
+			);
+			name = MedievalTests;
+			productName = MedievalTests;
+			productReference = 5BE025F8302DE650006D078F /* MedievalTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5BE02604302DE66D006D078F /* MedievalTestsUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5BE0260D302DE66D006D078F /* Build configuration list for PBXNativeTarget "MedievalTestsUI" */;
+			buildPhases = (
+				5BE02601302DE66D006D078F /* Sources */,
+				5BE02602302DE66D006D078F /* Frameworks */,
+				5BE02603302DE66D006D078F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5BE0260C302DE66D006D078F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5BE02606302DE66D006D078F /* MedievalTestsUI */,
+			);
+			name = MedievalTestsUI;
+			productName = MedievalTestsUI;
+			productReference = 5BE02605302DE66D006D078F /* MedievalTestsUI.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		918B22A860806A20C88BA438 /* MedievalDomain */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 330ADDCFEF765AA1E47ACA73 /* Build configuration list for PBXNativeTarget "MedievalDomain" */;
@@ -212,7 +274,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A9C507D43CA3A648D542F177 /* Medieval/Domain */,
+				A9C507D43CA3A648D542F177 /* MedievalDomain */,
 			);
 			name = MedievalDomain;
 			productName = MedievalDomain;
@@ -232,6 +294,14 @@
 					5BE01A21302CCE00006D078F = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					5BE025F7302DE650006D078F = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 5BE01A21302CCE00006D078F;
+					};
+					5BE02604302DE66D006D078F = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 5BE01A21302CCE00006D078F;
+					};
 				};
 			};
 			buildConfigurationList = 5BE01A1D302CCE00006D078F /* Build configuration list for PBXProject "Medieval" */;
@@ -249,21 +319,29 @@
 			projectRoot = "";
 			targets = (
 				5BE01A21302CCE00006D078F /* Medieval */,
+				5BE025F7302DE650006D078F /* MedievalTests */,
 				918B22A860806A20C88BA438 /* MedievalDomain */,
-				274C7D161C9520597DFDCB49 /* MedievalDomainTests */,
+				5BE02604302DE66D006D078F /* MedievalTestsUI */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		013728FEC31B7F76AF8A772F /* Resources */ = {
+		5BE01A20302CCE00006D078F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5BE01A20302CCE00006D078F /* Resources */ = {
+		5BE025F6302DE650006D078F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BE02603302DE66D006D078F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -287,14 +365,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		A1F7EDED256D14991D1A18B0 /* Sources */ = {
+		5BE025F4302DE650006D078F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EDBDE8237EA0F7241CA224FF /* Sources */ = {
+		5BE02601302DE66D006D078F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1F7EDED256D14991D1A18B0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -310,11 +395,21 @@
 			target = 918B22A860806A20C88BA438 /* MedievalDomain */;
 			targetProxy = 5A213896355486CCB0297BB0 /* PBXContainerItemProxy */;
 		};
-		349682008F6CB8A1CCD4EE48 /* PBXTargetDependency */ = {
+		542F030661A259B180EADC2B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = MedievalDomain;
 			target = 918B22A860806A20C88BA438 /* MedievalDomain */;
-			targetProxy = 39A8162DBB3C3464286283F1 /* PBXContainerItemProxy */;
+			targetProxy = DD1E5B9D3F21ED94A6C8E68E /* PBXContainerItemProxy */;
+		};
+		5BE025FD302DE650006D078F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5BE01A21302CCE00006D078F /* Medieval */;
+			targetProxy = 5BE025FC302DE650006D078F /* PBXContainerItemProxy */;
+		};
+		5BE0260C302DE66D006D078F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5BE01A21302CCE00006D078F /* Medieval */;
+			targetProxy = 5BE0260B302DE66D006D078F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -330,6 +425,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_TESTABILITY = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -379,6 +475,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -530,10 +627,6 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				EXCLUDED_SOURCE_FILE_NAMES = (
-					"Medieval/Domain/*",
-					"Medieval/Domain/Resources/*",
-				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -567,10 +660,6 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				EXCLUDED_SOURCE_FILE_NAMES = (
-					"Medieval/Domain/*",
-					"Medieval/Domain/Resources/*",
-				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -589,6 +678,88 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5BE025FE302DE650006D078F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XAU3F58R7T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Medieval.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Medieval";
+			};
+			name = Debug;
+		};
+		5BE025FF302DE650006D078F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XAU3F58R7T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Medieval.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Medieval";
+			};
+			name = Release;
+		};
+		5BE0260E302DE66D006D078F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XAU3F58R7T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalTestsUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Medieval;
+			};
+			name = Debug;
+		};
+		5BE0260F302DE66D006D078F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XAU3F58R7T;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.lysytsia.MedievalTestsUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Medieval;
 			};
 			name = Release;
 		};
@@ -614,15 +785,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		045824D86E11C23814C570C2 /* Build configuration list for PBXNativeTarget "MedievalDomainTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				405F09B1E264433E8B0FFDBA /* Release */,
-				5C8C400EB2A559E3BCA25087 /* Debug */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		330ADDCFEF765AA1E47ACA73 /* Build configuration list for PBXNativeTarget "MedievalDomain" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -646,6 +808,24 @@
 			buildConfigurations = (
 				5BE01A37302CCE01006D078F /* Debug */,
 				5BE01A38302CCE01006D078F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5BE02600302DE650006D078F /* Build configuration list for PBXNativeTarget "MedievalTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BE025FE302DE650006D078F /* Debug */,
+				5BE025FF302DE650006D078F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5BE0260D302DE66D006D078F /* Build configuration list for PBXNativeTarget "MedievalTestsUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BE0260E302DE66D006D078F /* Debug */,
+				5BE0260F302DE66D006D078F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

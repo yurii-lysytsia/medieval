@@ -5,29 +5,29 @@ for the game board. Game rules live in a UI-independent domain module.
 
 ## Architecture
 
-`Medieval/Domain` builds as the `MedievalDomain` framework: game rules and
-state, with no UI dependencies. The app links and embeds it rather than
-compiling those sources itself, so the boundary is enforced by the compiler —
-app code reaches the rules only through `import MedievalDomain` and only
-through the module's `public` surface.
+`MedievalDomain` builds as a framework: game rules and state, with no UI
+dependencies. The app links and embeds it rather than compiling those sources
+itself, so the boundary is enforced by the compiler — app code reaches the
+rules only through `import MedievalDomain` and only through the module's
+`public` surface.
 
-The project has three targets: the `Medieval` app, the `MedievalDomain`
-framework, and the `MedievalDomainTests` bundle. Each owns a synchronized
-folder, so a new file dropped into `Medieval/Domain` or
-`Tests/MedievalDomainTests` joins its target with no project changes.
-`EXCLUDED_SOURCE_FILE_NAMES` keeps the domain folder out of the app target,
-which sweeps `Medieval/` as a whole.
+Every target owns one top-level folder of the same name, and each folder is
+synchronized, so a new file dropped into it joins its target with no project
+changes.
 
 Content resources live in the framework's own bundle, reached through
 `Bundle(for:)`, so the app and the tests read the same file.
 
 ## Structure
 
-- `Medieval/App` — application entry point and navigation
-- `Medieval/Domain` — deterministic game state and rules, without UI dependencies
-- `Medieval/Persistence` — save-storage boundary
-- `Medieval/Scenes` — SpriteKit board scenes
-- `Medieval/UI` — SwiftUI views and SpriteKit bridge
+- `Medieval` — the app: entry point, navigation, SwiftUI views, SpriteKit scenes
+  - `App` — entry point and navigation
+  - `Persistence` — save-storage boundary
+  - `Scenes` — SpriteKit board scenes
+  - `UI` — SwiftUI views and the SpriteKit bridge
+- `MedievalDomain` — deterministic game state and rules, without UI dependencies
+- `MedievalTests` — unit tests for the domain
+- `MedievalTestsUI` — UI tests that drive the running app
 
 ## Requirements
 
@@ -47,10 +47,20 @@ build—from the repository root:
 ./Scripts/verify.sh
 ```
 
+UI tests are not part of that gate: they need a signed build, drive the real
+window server, and take minutes. Run them on their own:
+
+```sh
+./Scripts/verify-ui.sh
+```
+
+XCUITest inspects every running application, so a background app that never
+settles can stall a launch test. Quit noisy background apps if one hangs.
+
 To automatically apply the repository formatting rules:
 
 ```sh
-swiftformat Medieval Tests
+swiftformat Medieval MedievalDomain MedievalTests MedievalTestsUI
 ```
 
 The supported macOS range and the compatibility-build command are documented in

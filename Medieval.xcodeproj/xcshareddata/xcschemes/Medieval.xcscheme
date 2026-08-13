@@ -41,9 +41,19 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "274C7D161C9520597DFDCB49"
-               BuildableName = "MedievalDomainTests.xctest"
-               BlueprintName = "MedievalDomainTests"
+               BlueprintIdentifier = "5BE025F7302DE650006D078F"
+               BuildableName = "MedievalTests.xctest"
+               BlueprintName = "MedievalTests"
+               ReferencedContainer = "container:Medieval.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5BE02604302DE66D006D078F"
+               BuildableName = "MedievalTestsUI.xctest"
+               BlueprintName = "MedievalTestsUI"
                ReferencedContainer = "container:Medieval.xcodeproj">
             </BuildableReference>
          </TestableReference>
