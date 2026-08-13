@@ -4,11 +4,12 @@ import SwiftUI
 struct RootView: View {
     @ObservedObject var coordinator: AppCoordinator
     @State private var showsJournal = false
+    @State private var showsSaves = false
 
     var body: some View {
         switch coordinator.route {
         case .menu:
-            MainMenuView(onNewGame: coordinator.startNewGame)
+            MainMenuView(game: coordinator.game, onNewGame: coordinator.startNewGame, onLoadGame: coordinator.loadGame)
         case .game:
             // The game screen observes the store directly. Reaching through
             // `coordinator.game` from a view that only observes the coordinator
@@ -86,6 +87,9 @@ struct GameScreen: View {
             }
         }
         .sheet(isPresented: $showsJournal) { journalView }
+        .sheet(isPresented: $showsSaves) {
+            SaveManagerView(game: coordinator.game, allowsSaving: true) { _ in showsSaves = false }
+        }
     }
 
     private var handoffScreen: some View {

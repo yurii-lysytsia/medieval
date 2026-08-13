@@ -15,16 +15,22 @@ final class GameStore: ObservableObject {
     @Published private(set) var cameraResetToken = 0
     @Published private(set) var notices: [GameNotice] = []
     @Published private(set) var criticalNotice: GameNotice?
+    @Published private(set) var saves: [SaveMetadata] = []
+    @Published private(set) var saveError: String?
+    private let saveCatalog: any GameSaveCatalog
 
     init(
         state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
-        content: GameContentConfiguration? = nil
+        content: GameContentConfiguration? = nil,
+        saveCatalog: any GameSaveCatalog = FileGameSaveCatalog()
     ) {
         let loadedContent = content ?? Self.loadBundledContent()
         self.state = state
         self.content = loadedContent
         world = loadedContent.scenario.world
         economy = EconomyState(players: loadedContent.scenario.world.players, startingGold: loadedContent.scenario.startingGold)
+        self.saveCatalog = saveCatalog
+        refreshSaves()
     }
 
     var hud: TurnHUDSnapshot {
@@ -198,6 +204,57 @@ final class GameStore: ObservableObject {
 
     func dismissCriticalNotice() {
         criticalNotice = nil
+    }
+
+    func refreshSaves() {
+        saves = saveCatalog.list()
+    }
+
+    @discardableResult
+    func createManualSave(named name: String) -> Bool {
+        do {
+            try saveCatalog.save(GameSaveDocument(name: name, game: state, world: world, economy: economy, selectedHexID: selectedHexID))
+            saveError = nil
+            refreshSaves()
+            present("Партію «\(name.trimmingCharacters(in: .whitespacesAndNewlines))» збережено.", severity: .success)
+            return true
+        } catch {
+            saveError = error.localizedDescription
+            return false
+        }
+    }
+
+    @discardableResult
+    func loadSave(_ id: UUID) -> Bool {
+        do {
+            let document = try saveCatalog.load(id)
+            content = Self.loadBundledContent()
+            state = document.game
+            world = document.world
+            economy = document.economy
+            selectedHexID = document.selectedHexID
+            clearMovementPreview()
+            pendingEncounter = nil
+            battleReport = nil
+            criticalNotice = nil
+            saveError = nil
+            refreshSaves()
+            present("Збереження «\(document.metadata.name)» завантажено.", severity: .success)
+            return true
+        } catch {
+            saveError = error.localizedDescription
+            return false
+        }
+    }
+
+    func deleteSave(_ id: UUID) {
+        do {
+            try saveCatalog.delete(id)
+            saveError = nil
+            refreshSaves()
+        } catch {
+            saveError = error.localizedDescription
+        }
     }
 
     func startNewGame(setup: [GameSetupPlayer]? = nil) {

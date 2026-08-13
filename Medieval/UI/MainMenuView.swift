@@ -2,11 +2,14 @@ import AppKit
 import SwiftUI
 
 struct MainMenuView: View {
+    @ObservedObject var game: GameStore
     let onNewGame: ([GameSetupPlayer]) -> Void
+    let onLoadGame: (UUID) -> Void
     @State private var isCreatingGame = false
     @State private var playerCount = 2
     @State private var names = ["Корона", "Союз", "Північ", "Південь"]
     @State private var errorMessage: String?
+    @State private var showsSaves = false
 
     var body: some View {
         VStack(spacing: 22) {
@@ -19,12 +22,21 @@ struct MainMenuView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.background)
+        .sheet(isPresented: $showsSaves) {
+            SaveManagerView(game: game, allowsSaving: false) { id in
+                showsSaves = false
+                onLoadGame(id)
+            }
+        }
     }
 
     private var menu: some View {
         VStack(spacing: 12) {
             Button("Нова гра") { isCreatingGame = true }.buttonStyle(.borderedProminent)
-            Button("Завантажити") {}.disabled(true)
+            Button("Завантажити") {
+                game.refreshSaves()
+                showsSaves = true
+            }
             Button("Налаштування") {}.disabled(true)
             Button("Вийти") { NSApplication.shared.terminate(nil) }
         }
