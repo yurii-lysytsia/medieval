@@ -130,7 +130,8 @@
       "baseIncome": 4,
       "buildingSlots": 1,
       "upgradeCost": 0,
-      "requiredBuildingIDs": []
+      "requiredBuildingIDs": [],
+      "recruitmentLimit": 1
     },
     {
       "id": "town",
@@ -140,7 +141,8 @@
       "upgradeCost": 100,
       "requiredBuildingIDs": [
         "town-hall"
-      ]
+      ],
+      "recruitmentLimit": 2
     },
     {
       "id": "city",
@@ -153,7 +155,8 @@
         "barracks",
         "market",
         "walls"
-      ]
+      ],
+      "recruitmentLimit": 3
     }
   ],
   "buildings": [

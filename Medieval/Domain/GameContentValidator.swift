@@ -83,6 +83,7 @@ public enum GameContentValidator {
         for level in configuration.cityLevels {
             try validateMinimum(level.baseIncome, field: "city level \(level.id.rawValue) base income", minimum: 0)
             try validateMinimum(level.buildingSlots, field: "city level \(level.id.rawValue) building slots", minimum: 0)
+            try validateMinimum(level.recruitmentLimit, field: "city level \(level.id.rawValue) recruitment limit", minimum: 0)
         }
         for building in configuration.buildings {
             try validateMinimum(building.constructionCost, field: "building \(building.id.rawValue) construction cost", minimum: 0)
@@ -221,6 +222,14 @@ public enum GameContentValidator {
             }
             if case let .hex(hexID) = unit.location, hexByID[hexID] == nil {
                 throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "hex \"\(hexID.rawValue)\"")
+            }
+            if case let .garrison(cityID) = unit.location {
+                guard let city = world.cities.first(where: { $0.id == cityID }) else {
+                    throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "garrison city \"\(cityID.rawValue)\"")
+                }
+                guard city.ownerID == unit.ownerID else {
+                    throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "owned garrison city \"\(cityID.rawValue)\"")
+                }
             }
         }
         for city in world.cities {

@@ -274,6 +274,9 @@ public struct WorldState: Codable, Equatable, Sendable {
     public private(set) var cities: [City]
     public private(set) var buildings: [Building]
     public private(set) var phase: GamePhase
+    /// Monotonic across the match. Numbering a recruit from the current unit
+    /// count reuses ids as soon as a unit dies and leaves a gap in the sequence.
+    public private(set) var nextUnitNumber: Int
 
     public init(
         players: [WorldPlayer],
@@ -283,7 +286,8 @@ public struct WorldState: Codable, Equatable, Sendable {
         armies: [Army] = [],
         cities: [City] = [],
         buildings: [Building] = [],
-        phase: GamePhase = .setup
+        phase: GamePhase = .setup,
+        nextUnitNumber: Int? = nil
     ) {
         if let violation = Self.invariantViolation(playerCount: players.count) {
             preconditionFailure(violation)
@@ -296,6 +300,7 @@ public struct WorldState: Codable, Equatable, Sendable {
         self.cities = cities
         self.buildings = buildings
         self.phase = phase
+        self.nextUnitNumber = nextUnitNumber ?? units.count + 1
     }
 
     /// Decoded worlds come from content files and saves we do not control, so
@@ -319,6 +324,9 @@ public struct WorldState: Codable, Equatable, Sendable {
         cities = try container.decode([City].self, forKey: .cities)
         buildings = try container.decode([Building].self, forKey: .buildings)
         phase = try container.decode(GamePhase.self, forKey: .phase)
+        // Saves written before the counter existed fall back to the old
+        // behaviour, which is correct for any match that has lost no units.
+        nextUnitNumber = try container.decodeIfPresent(Int.self, forKey: .nextUnitNumber) ?? units.count + 1
     }
 
     private static func invariantViolation(playerCount: Int) -> String? {
@@ -348,6 +356,12 @@ public struct WorldState: Codable, Equatable, Sendable {
         guard let index = cities.firstIndex(where: { $0.id == cityID }) else { return }
         let city = cities[index]
         cities[index] = City(id: city.id, ownerID: city.ownerID, hexID: city.hexID, levelID: levelID, isCapital: city.isCapital)
+    }
+
+    /// Hands out the next unit number and moves the counter on.
+    mutating func reserveUnitNumber() -> Int {
+        defer { nextUnitNumber += 1 }
+        return nextUnitNumber
     }
 
     mutating func addUnit(_ unit: Unit) {

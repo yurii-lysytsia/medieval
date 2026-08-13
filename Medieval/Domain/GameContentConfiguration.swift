@@ -75,6 +75,7 @@ public struct CityLevelDefinition: Codable, Equatable, Sendable, Identifiable {
     public let displayName: String
     public let baseIncome: Int
     public let buildingSlots: Int
+    public let recruitmentLimit: Int
     public let upgradeCost: Int
     public let requiredBuildingIDs: [BuildingTypeID]
 
@@ -83,6 +84,7 @@ public struct CityLevelDefinition: Codable, Equatable, Sendable, Identifiable {
         displayName: String,
         baseIncome: Int,
         buildingSlots: Int,
+        recruitmentLimit: Int = 0,
         upgradeCost: Int,
         requiredBuildingIDs: [BuildingTypeID] = []
     ) {
@@ -90,6 +92,7 @@ public struct CityLevelDefinition: Codable, Equatable, Sendable, Identifiable {
         self.displayName = displayName
         self.baseIncome = baseIncome
         self.buildingSlots = buildingSlots
+        self.recruitmentLimit = recruitmentLimit
         self.upgradeCost = upgradeCost
         self.requiredBuildingIDs = requiredBuildingIDs
     }
