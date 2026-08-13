@@ -1,12 +1,19 @@
 import Foundation
 
+public enum PlayerStatus: String, Codable, Equatable, Sendable {
+    case active
+    case eliminated
+}
+
 public struct Player: Codable, Equatable, Sendable, Identifiable {
     public let id: UUID
     public let displayName: String
+    public let status: PlayerStatus
 
-    public init(id: UUID = UUID(), displayName: String) {
+    public init(id: UUID = UUID(), displayName: String, status: PlayerStatus = .active) {
         self.id = id
         self.displayName = displayName
+        self.status = status
     }
 }
 
@@ -66,16 +73,23 @@ public struct GameState: Codable, Equatable, Sendable {
         phase = try container.decode(GamePhase.self, forKey: .phase)
     }
 
+    public var activePlayers: [Player] {
+        players.filter { $0.status == .active }
+    }
+
     public var activePlayer: Player {
         players[activePlayerIndex]
     }
 
     mutating func advanceTurn() {
-        activePlayerIndex = (activePlayerIndex + 1) % players.count
-        if activePlayerIndex == 0 {
+        let previousIndex = activePlayerIndex
+        repeat {
+            activePlayerIndex = (activePlayerIndex + 1) % players.count
+        } while players[activePlayerIndex].status == .eliminated && activePlayerIndex != previousIndex
+        if activePlayerIndex <= previousIndex {
             turn += 1
         }
-        phase = .economy
+        phase = .handoff
     }
 
     mutating func advancePhase(to phase: GamePhase) {
@@ -99,6 +113,10 @@ public struct GameState: Codable, Equatable, Sendable {
             return "Turn number must be positive."
         }
         return nil
+    }
+
+    mutating func completeHandoff() {
+        phase = .economy
     }
 }
 

@@ -16,13 +16,25 @@ final class GameStore: ObservableObject {
         self.content = content ?? Self.loadBundledContent()
     }
 
-    func send(_ action: GameAction) {
-        guard case let .success(next) = GameRules.apply(action, to: state) else { return }
+    @discardableResult
+    func send(_ action: GameAction) -> Bool {
+        guard case let .success(next) = GameRules.apply(action, to: state) else { return false }
         state = next
+        return true
+    }
+
+    func advancePhase() {
+        send(.advancePhase(playerID: state.activePlayer.id))
     }
 
     func endTurn() {
-        send(.endTurn(playerID: state.activePlayer.id))
+        if send(.endTurn(playerID: state.activePlayer.id)) {
+            selectedHexID = nil
+        }
+    }
+
+    func confirmHandoff() {
+        send(.confirmHandoff(playerID: state.activePlayer.id))
     }
 
     func selectHex(_ id: HexID?) {

@@ -23,6 +23,14 @@ struct GameScreen: View {
     let onShowMenu: () -> Void
 
     var body: some View {
+        if game.state.phase == .handoff {
+            handoffScreen
+        } else {
+            playScreen
+        }
+    }
+
+    private var playScreen: some View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -32,8 +40,12 @@ struct GameScreen: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Завершити хід") {
-                    game.endTurn()
+                Button(game.state.phase == .combat ? "Завершити хід" : "Наступна фаза") {
+                    if game.state.phase == .combat {
+                        game.endTurn()
+                    } else {
+                        game.advancePhase()
+                    }
                 }
                 .keyboardShortcut(.return, modifiers: [])
                 Button("Огляд мапи") {
@@ -60,6 +72,29 @@ struct GameScreen: View {
                 mapInspector
             }
         }
+    }
+
+    private var handoffScreen: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            Image(systemName: "hand.raised.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(.brown)
+            Text("Передайте пристрій")
+                .font(.largeTitle.bold())
+            Text("Наступний хід: \(game.state.activePlayer.displayName)")
+                .font(.title3)
+            Text("Ігрове поле та попередній вибір приховано.")
+                .foregroundStyle(.secondary)
+            Button("Почати хід") {
+                game.confirmHandoff()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.return, modifiers: [])
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var mapInspector: some View {

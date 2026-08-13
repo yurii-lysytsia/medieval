@@ -3,11 +3,12 @@ import Foundation
 public enum GameAction: Equatable, Sendable {
     case advancePhase(playerID: UUID)
     case endTurn(playerID: UUID)
+    case confirmHandoff(playerID: UUID)
 }
 
 extension GameAction: Codable {
     private enum CodingKeys: String, CodingKey { case kind, playerID }
-    private enum Kind: String, Codable { case advancePhase, endTurn }
+    private enum Kind: String, Codable { case advancePhase, endTurn, confirmHandoff }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -16,6 +17,8 @@ extension GameAction: Codable {
             self = try .advancePhase(playerID: container.decode(UUID.self, forKey: .playerID))
         case .endTurn:
             self = try .endTurn(playerID: container.decode(UUID.self, forKey: .playerID))
+        case .confirmHandoff:
+            self = try .confirmHandoff(playerID: container.decode(UUID.self, forKey: .playerID))
         }
     }
 
@@ -27,6 +30,9 @@ extension GameAction: Codable {
             try container.encode(playerID, forKey: .playerID)
         case let .endTurn(playerID):
             try container.encode(Kind.endTurn, forKey: .kind)
+            try container.encode(playerID, forKey: .playerID)
+        case let .confirmHandoff(playerID):
+            try container.encode(Kind.confirmHandoff, forKey: .kind)
             try container.encode(playerID, forKey: .playerID)
         }
     }
@@ -51,6 +57,10 @@ public enum GameRules {
             guard playerID == state.activePlayer.id else { return .failure(.playerIsNotActive) }
             guard state.phase == .combat else { return .failure(.invalidPhase(state.phase)) }
             next.advanceTurn()
+        case let .confirmHandoff(playerID):
+            guard playerID == state.activePlayer.id else { return .failure(.playerIsNotActive) }
+            guard state.phase == .handoff else { return .failure(.invalidPhase(state.phase)) }
+            next.completeHandoff()
         }
 
         return .success(next)

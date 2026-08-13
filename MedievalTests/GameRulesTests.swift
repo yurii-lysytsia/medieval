@@ -18,9 +18,10 @@ struct GameRulesTests {
         #expect(combat.phase == .combat)
     }
 
-    @Test func endingCombatMovesToNextPlayerAndResetsPhase() throws {
+    @Test func endingCombatShowsHandoffBeforeNextPlayersEconomy() throws {
         let initial = GameState(players: [crown, union], seed: 42, phase: .combat)
-        let next = try GameRules.apply(.endTurn(playerID: crown.id), to: initial).get()
+        let handoff = try GameRules.apply(.endTurn(playerID: crown.id), to: initial).get()
+        let next = try GameRules.apply(.confirmHandoff(playerID: union.id), to: handoff).get()
 
         #expect(next.turn == 1)
         #expect(next.activePlayer == union)
@@ -34,6 +35,17 @@ struct GameRulesTests {
 
         #expect(afterRound.turn == 2)
         #expect(afterRound.activePlayer == initial.activePlayer)
+    }
+
+    @Test func handoffCyclesPastEliminatedPlayers() throws {
+        let eliminated = Player(id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!, displayName: "Fallen", status: .eliminated)
+        let initial = GameState(players: [crown, eliminated, union], seed: 42, phase: .combat)
+
+        let handoff = try GameRules.apply(.endTurn(playerID: crown.id), to: initial).get()
+
+        #expect(handoff.activePlayer == union)
+        #expect(handoff.phase == .handoff)
+        #expect(GameRules.apply(.advancePhase(playerID: union.id), to: handoff) == .failure(.invalidPhase(.handoff)))
     }
 
     @Test func invalidPlayerOrPhaseDoesNotChangeState() {
