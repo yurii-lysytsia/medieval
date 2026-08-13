@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 @MainActor
 final class AppCoordinator: ObservableObject {
@@ -13,6 +14,10 @@ final class AppCoordinator: ObservableObject {
     func startNewGame(_ setup: [GameSetupPlayer]) {
         game.startNewGame(setup: setup)
         route = .game
+    }
+
+    func loadGame(_ id: UUID) {
+        if game.loadSave(id) { route = .game }
     }
 
     func showMenu() {

@@ -7,7 +7,7 @@ struct RootView: View {
     var body: some View {
         switch coordinator.route {
         case .menu:
-            MainMenuView(onNewGame: coordinator.startNewGame(_:))
+            MainMenuView(game: coordinator.game, onNewGame: coordinator.startNewGame(_:), onLoadGame: coordinator.loadGame)
         case .game:
             // The game screen observes the store directly. Reaching through
             // `coordinator.game` from a view that only observes the coordinator
@@ -23,6 +23,7 @@ struct GameScreen: View {
     @ObservedObject var game: GameStore
     let onShowMenu: () -> Void
     @State private var showsJournal = false
+    @State private var showsSaves = false
 
     var body: some View {
         if game.state.phase == .finished {
@@ -45,6 +46,14 @@ struct GameScreen: View {
             }
         }
         .sheet(isPresented: $showsJournal) { journalView }
+        .sheet(isPresented: $showsSaves) {
+            // The sheet closes only once the load has actually happened: a
+            // failed load has to leave the panel up, because the panel is where
+            // the reason is shown.
+            SaveManagerView(game: game, allowsSaving: true) { id in
+                if game.loadSave(id) { showsSaves = false }
+            }
+        }
     }
 
     private var playBoard: some View {
@@ -138,6 +147,10 @@ struct GameScreen: View {
             .disabled(!hud.canAdvance)
             Button("Огляд мапи") { game.resetMapCamera() }
             Button("Журнал") { showsJournal = true }
+            Button("Збереження") {
+                game.refreshSaves()
+                showsSaves = true
+            }
             Button("До меню", action: onShowMenu)
         }
         .fixedSize()
