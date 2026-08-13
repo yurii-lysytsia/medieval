@@ -194,6 +194,7 @@ struct BasicAIPlannerTests {
     private func plan(in world: WorldState, map: StaticHexMap? = nil, encounter: PendingEncounter? = nil) -> AIPlan {
         BasicAIPlanner.plan(
             for: "ai",
+            game: GameState(players: [Player(displayName: "ШІ", worldPlayerID: "ai"), Player(displayName: "Суперник", worldPlayerID: "rival")], seed: 1, phase: world.phase),
             world: world,
             economy: EconomyState(players: worldPlayers, startingGold: 100),
             content: content(map: map ?? self.map, world: world),

@@ -15,6 +15,7 @@ import Foundation
 public enum BasicAIPlanner {
     public static func plan(
         for playerID: WorldPlayerID,
+        game: GameState,
         world: WorldState,
         economy: EconomyState,
         content: GameContentConfiguration,
@@ -34,7 +35,7 @@ public enum BasicAIPlanner {
         case .construction:
             return AIPlan(playerID: playerID, phase: world.phase, target: target, steps: constructionSteps(for: playerID, world: world, economy: economy, content: content) + [AIStep(priority: .income, intent: .advancePhase)])
         case .movement:
-            return AIPlan(playerID: playerID, phase: world.phase, target: target, steps: movementSteps(for: playerID, world: world, content: content, target: target) + [AIStep(priority: .advance, intent: .advancePhase)])
+            return AIPlan(playerID: playerID, phase: world.phase, target: target, steps: movementSteps(for: playerID, game: game, world: world, content: content, target: target) + [AIStep(priority: .advance, intent: .advancePhase)])
         case .combat:
             // A battle this player did not start is not this player's to
             // resolve; ending the turn on top of somebody else's encounter
@@ -122,13 +123,13 @@ public enum BasicAIPlanner {
         AIEconomyDecisions.steps(for: playerID, world: world, economy: economy, content: content)
     }
 
-    /// Marching and attacking arrive with MED-55.
     private static func movementSteps(
-        for _: WorldPlayerID,
-        world _: WorldState,
-        content _: GameContentConfiguration,
-        target _: AITarget?
+        for playerID: WorldPlayerID,
+        game: GameState,
+        world: WorldState,
+        content: GameContentConfiguration,
+        target: AITarget?
     ) -> [AIStep] {
-        []
+        AIMovementDecisions.steps(for: playerID, game: game, world: world, content: content, target: target)
     }
 }
