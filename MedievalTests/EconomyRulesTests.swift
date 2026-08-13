@@ -20,7 +20,7 @@ struct EconomyRulesTests {
             economy: economy,
             terrain: [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 2, isPassable: true, isCityBuildable: true)],
             cityLevels: [CityLevelDefinition(id: "town", displayName: "Town", baseIncome: 8, buildingSlots: 2, upgradeCost: 0)],
-            units: [UnitDefinition(id: "spearmen", displayName: "Spearmen", recruitmentCost: 1, upkeep: 1, attack: 1, defense: 1, movement: 1)],
+            units: [UnitDefinition(id: "spearmen", displayName: "Spearmen", recruitmentCost: 1, upkeep: 1, hitPoints: 10, damage: 3, attackRange: 1, movement: 1, domain: .land, cargoCapacity: 0)],
             buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 1, incomeModifier: 3, defenseModifier: 0)]
         ).get()
 

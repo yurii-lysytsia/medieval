@@ -75,40 +75,52 @@
   ],
   "units": [
     {
-      "id": "spearmen",
-      "displayName": "Spearmen",
-      "recruitmentCost": 25,
-      "upkeep": 1,
-      "attack": 2,
-      "defense": 3,
-      "movement": 2
+      "id": "infantry",
+      "displayName": "Піхота",
+      "recruitmentCost": 20,
+      "upkeep": 2,
+      "hitPoints": 10,
+      "damage": 4,
+      "attackRange": 1,
+      "movement": 2,
+      "domain": "land",
+      "cargoCapacity": 0
     },
     {
       "id": "archers",
       "displayName": "Archers",
-      "recruitmentCost": 35,
+      "recruitmentCost": 25,
       "upkeep": 2,
-      "attack": 3,
-      "defense": 2,
-      "movement": 2
+      "hitPoints": 7,
+      "damage": 3,
+      "attackRange": 3,
+      "movement": 2,
+      "domain": "land",
+      "cargoCapacity": 0
     },
     {
       "id": "cavalry",
       "displayName": "Cavalry",
       "recruitmentCost": 60,
       "upkeep": 3,
-      "attack": 4,
-      "defense": 3,
-      "movement": 4
+      "hitPoints": 9,
+      "damage": 6,
+      "attackRange": 1,
+      "movement": 4,
+      "domain": "land",
+      "cargoCapacity": 0
     },
     {
-      "id": "trebuchet",
-      "displayName": "Trebuchet",
-      "recruitmentCost": 90,
-      "upkeep": 4,
-      "attack": 5,
-      "defense": 1,
-      "movement": 1
+      "id": "ship",
+      "displayName": "Корабель",
+      "recruitmentCost": 40,
+      "upkeep": 3,
+      "hitPoints": 0,
+      "damage": 0,
+      "attackRange": 0,
+      "movement": 4,
+      "domain": "navalTransport",
+      "cargoCapacity": 3
     }
   ],
   "cityLevels": [

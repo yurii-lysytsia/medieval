@@ -74,9 +74,11 @@ public enum GameContentValidator {
         for unit in configuration.units {
             try validateMinimum(unit.recruitmentCost, field: "unit \(unit.id.rawValue) recruitment cost", minimum: 0)
             try validateMinimum(unit.upkeep, field: "unit \(unit.id.rawValue) upkeep", minimum: 0)
-            try validateMinimum(unit.attack, field: "unit \(unit.id.rawValue) attack", minimum: 0)
-            try validateMinimum(unit.defense, field: "unit \(unit.id.rawValue) defense", minimum: 0)
+            try validateMinimum(unit.hitPoints, field: "unit \(unit.id.rawValue) hit points", minimum: unit.domain == .land ? 1 : 0)
+            try validateMinimum(unit.damage, field: "unit \(unit.id.rawValue) damage", minimum: 0)
+            try validateMinimum(unit.attackRange, field: "unit \(unit.id.rawValue) attack range", minimum: 0)
             try validateMinimum(unit.movement, field: "unit \(unit.id.rawValue) movement", minimum: 1)
+            try validateMinimum(unit.cargoCapacity, field: "unit \(unit.id.rawValue) cargo capacity", minimum: 0)
         }
         for level in configuration.cityLevels {
             try validateMinimum(level.baseIncome, field: "city level \(level.id.rawValue) base income", minimum: 0)
@@ -208,6 +210,17 @@ public enum GameContentValidator {
             }
             guard terrainByID[hex.terrainID]?.isPassable == true else {
                 throw GameContentValidationError.impassablePlacement(entity: "Army \"\(army.id.rawValue)\"", hexID: hex.id)
+            }
+        }
+        for unit in world.units {
+            try validateReference(unit.ownerID, in: playerIDs, entity: "unit instance", id: unit.id.rawValue, reference: "owner")
+            try validateReference(unit.typeID, in: unitIDs, entity: "unit instance", id: unit.id.rawValue, reference: "unit type")
+            guard let definition = configuration.units.first(where: { $0.id == unit.typeID }) else { continue }
+            guard unit.currentHitPoints > 0, unit.currentHitPoints <= definition.hitPoints || definition.domain == .navalTransport else {
+                throw GameContentValidationError.invalidNumber(field: "unit \(unit.id.rawValue) current hit points", value: unit.currentHitPoints, minimum: 1)
+            }
+            if case let .hex(hexID) = unit.location, hexByID[hexID] == nil {
+                throw GameContentValidationError.missingReference(entity: "unit instance", id: unit.id.rawValue, reference: "hex \"\(hexID.rawValue)\"")
             }
         }
         for city in world.cities {

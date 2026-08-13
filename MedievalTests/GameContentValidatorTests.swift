@@ -9,9 +9,11 @@ struct GameContentValidatorTests {
             displayName: "Spearmen II",
             recruitmentCost: 25,
             upkeep: 1,
-            attack: 2,
-            defense: 3,
-            movement: 2
+            hitPoints: 10,
+            damage: 4,
+            attackRange: 1,
+            movement: 2,
+            domain: .land
         )
         let configuration = fixture(units: [unit(), duplicate])
 
@@ -35,9 +37,11 @@ struct GameContentValidatorTests {
             displayName: "Spearmen",
             recruitmentCost: -1,
             upkeep: 1,
-            attack: 2,
-            defense: 3,
-            movement: 2
+            hitPoints: 10,
+            damage: 4,
+            attackRange: 1,
+            movement: 2,
+            domain: .land
         )
         let configuration = fixture(units: [invalidUnit])
 
@@ -244,9 +248,11 @@ struct GameContentValidatorTests {
             displayName: "Spearmen",
             recruitmentCost: 25,
             upkeep: 1,
-            attack: 2,
-            defense: 3,
-            movement: 2
+            hitPoints: 10,
+            damage: 4,
+            attackRange: 1,
+            movement: 2,
+            domain: .land
         )
     }
 
