@@ -40,14 +40,9 @@ public extension GameContentLoader {
             throw GameContentLoadingError.invalidJSON("Europe map dimensions do not match its tiles.")
         }
 
-        let hexes = manifest.tiles.map { tile in
-            Hex(
-                id: HexID(rawValue: tile.id),
-                coordinate: HexCoordinate(q: tile.q, r: tile.r),
-                terrainID: TerrainID(rawValue: terrainID(for: tile.terrain))
-            )
-        }
-        let idByCoordinate = Dictionary(uniqueKeysWithValues: hexes.map { ($0.coordinate, $0.id) })
+        let tileByCoordinate = Dictionary(uniqueKeysWithValues: manifest.tiles.map {
+            (HexCoordinate(q: $0.q, r: $0.r), $0)
+        })
         let directions = [
             HexCoordinate(q: 1, r: 0),
             HexCoordinate(q: 1, r: -1),
@@ -56,6 +51,22 @@ public extension GameContentLoader {
             HexCoordinate(q: -1, r: 1),
             HexCoordinate(q: 0, r: 1),
         ]
+        let hexes = manifest.tiles.map { tile in
+            let coordinate = HexCoordinate(q: tile.q, r: tile.r)
+            return Hex(
+                id: HexID(rawValue: tile.id),
+                coordinate: coordinate,
+                terrainID: TerrainID(
+                    rawValue: terrainID(
+                        for: tile,
+                        at: coordinate,
+                        tileByCoordinate: tileByCoordinate,
+                        directions: directions
+                    )
+                )
+            )
+        }
+        let idByCoordinate = Dictionary(uniqueKeysWithValues: hexes.map { ($0.coordinate, $0.id) })
         let neighborhoods = hexes.map { hex in
             let neighbors = directions.compactMap { direction in
                 idByCoordinate[
@@ -123,10 +134,18 @@ public extension GameContentLoader {
         return try decodeEuropeMap(data, basedOn: base)
     }
 
-    private static func terrainID(for manifestTerrain: String) -> String {
-        switch manifestTerrain {
-        case "water": "deep-water"
-        default: manifestTerrain
+    private static func terrainID(
+        for tile: EuropeMapTile,
+        at coordinate: HexCoordinate,
+        tileByCoordinate: [HexCoordinate: EuropeMapTile],
+        directions: [HexCoordinate]
+    ) -> String {
+        guard tile.terrain == "water" else { return tile.terrain }
+        let touchesLand = directions.contains { direction in
+            tileByCoordinate[
+                HexCoordinate(q: coordinate.q + direction.q, r: coordinate.r + direction.r)
+            ]?.terrain != "water"
         }
+        return touchesLand ? "shallows" : "deep-water"
     }
 }

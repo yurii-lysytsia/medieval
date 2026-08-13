@@ -12,6 +12,7 @@ struct EuropeMapConfigurationTests {
         #expect(map.neighborhoods.count == 1200)
         #expect(configuration.scenario.world.hexes == map.hexes)
         #expect(map.hexes.contains { $0.terrainID == "deep-water" })
+        #expect(map.hexes.contains { $0.terrainID == "shallows" })
         #expect(map.hexes.contains { $0.terrainID == "mountains" })
     }
 

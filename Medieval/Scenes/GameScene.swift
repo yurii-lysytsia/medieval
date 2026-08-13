@@ -19,13 +19,14 @@ final class GameScene: SKScene {
     private static let fullZoomStepDelta: CGFloat = 10
     private static let minimumZoom: CGFloat = 0.12
     private static let maximumZoom: CGFloat = 2.5
-    private static let spriteScale: CGFloat = 2
-    private static let nativeTileSize = CGSize(width: 39, height: 43)
-    private static let nativeHorizontalStep: CGFloat = 36.5
-    private static let nativeVerticalStep: CGFloat = 30
+    private static let renderedTileSize = CGSize(width: 80, height: 90)
+    private static let horizontalStep: CGFloat = 73
+    private static let verticalStep: CGFloat = 60
     private let hexRadius: CGFloat = 40
     private let hexHalfWidth: CGFloat = 36.5
     private var hexCenters: [HexID: CGPoint] = [:]
+    private var terrainTextures: [TerrainID: SKTexture] = [:]
+    private var riverOverlayTexture: SKTexture?
     private var renderedMapID: String?
     private var mapMinimumProjectedX: CGFloat = 0
     private var mapMaximumR = 0
@@ -145,21 +146,10 @@ final class GameScene: SKScene {
 
         for river in world.riverBoundaries {
             guard let firstCenter = hexCenters[river.boundary.firstHexID],
-                  let secondCenter = hexCenters[river.boundary.secondHexID],
-                  let path = riverPath(between: firstCenter, and: secondCenter)
+                  let secondCenter = hexCenters[river.boundary.secondHexID]
             else { continue }
 
-            let border = SKShapeNode(path: path)
-            border.name = "river:border"
-            border.strokeColor = .init(red: 0.03, green: 0.12, blue: 0.17, alpha: 0.95)
-            border.lineCap = .round
-            riverLayer.addChild(border)
-
-            let water = SKShapeNode(path: path)
-            water.name = "river:water"
-            water.strokeColor = .init(red: 0.40, green: 0.84, blue: 0.94, alpha: 1)
-            water.lineCap = .round
-            riverLayer.addChild(water)
+            riverLayer.addChild(riverNode(from: firstCenter, to: secondCenter))
         }
         updateRiverLineWidths()
 
@@ -222,6 +212,7 @@ final class GameScene: SKScene {
         renderedMapID = map.id
         mapLayer.removeAllChildren()
         hexCenters = [:]
+        terrainTextures = [:]
         mapMinimumProjectedX = map.hexes
             .map { CGFloat($0.coordinate.q) + CGFloat($0.coordinate.r) / 2 }
             .min() ?? 0
@@ -230,16 +221,10 @@ final class GameScene: SKScene {
         for hex in map.hexes {
             let center = point(for: hex.coordinate)
             hexCenters[hex.id] = center
-            let textureName = "hex-\(hex.id.rawValue)"
-            if Bundle.main.url(forResource: textureName, withExtension: "png") != nil {
-                let texture = SKTexture(imageNamed: textureName)
-                texture.filteringMode = .nearest
+            if let texture = terrainTexture(for: hex.terrainID) {
                 let node = SKSpriteNode(
                     texture: texture,
-                    size: CGSize(
-                        width: Self.nativeTileSize.width * Self.spriteScale,
-                        height: Self.nativeTileSize.height * Self.spriteScale
-                    )
+                    size: Self.renderedTileSize
                 )
                 node.name = "hex:\(hex.id.rawValue)"
                 node.position = center
@@ -253,6 +238,16 @@ final class GameScene: SKScene {
                 mapLayer.addChild(node)
             }
         }
+    }
+
+    private func terrainTexture(for terrainID: TerrainID) -> SKTexture? {
+        if let cached = terrainTextures[terrainID] { return cached }
+        let name = "hex-terrain-\(terrainID.rawValue)"
+        guard Bundle.main.url(forResource: name, withExtension: "png") != nil else { return nil }
+        let texture = SKTexture(imageNamed: name)
+        texture.filteringMode = .linear
+        terrainTextures[terrainID] = texture
+        return texture
     }
 
     private func hexID(at scenePoint: CGPoint) -> HexID? {
@@ -331,10 +326,10 @@ final class GameScene: SKScene {
 
     private func point(for coordinate: HexCoordinate) -> CGPoint {
         let projectedX = CGFloat(coordinate.q) + CGFloat(coordinate.r) / 2
-        let x = Self.nativeTileSize.width * Self.spriteScale / 2
-            + Self.nativeHorizontalStep * Self.spriteScale * (projectedX - mapMinimumProjectedX)
-        let y = Self.nativeTileSize.height * Self.spriteScale / 2
-            + Self.nativeVerticalStep * Self.spriteScale * CGFloat(mapMaximumR - coordinate.r)
+        let x = Self.renderedTileSize.width / 2
+            + Self.horizontalStep * (projectedX - mapMinimumProjectedX)
+        let y = Self.renderedTileSize.height / 2
+            + Self.verticalStep * CGFloat(mapMaximumR - coordinate.r)
         return CGPoint(x: x, y: y)
     }
 
@@ -391,6 +386,40 @@ final class GameScene: SKScene {
         path.move(to: CGPoint(x: midpoint.x - halfEdge.x, y: midpoint.y - halfEdge.y))
         path.addLine(to: CGPoint(x: midpoint.x + halfEdge.x, y: midpoint.y + halfEdge.y))
         return path
+    }
+
+    private func riverNode(from first: CGPoint, to second: CGPoint) -> SKNode {
+        if riverOverlayTexture == nil,
+           Bundle.main.url(forResource: "hex-river-edge-ne", withExtension: "png") != nil
+        {
+            let texture = SKTexture(imageNamed: "hex-river-edge-ne")
+            texture.filteringMode = .linear
+            riverOverlayTexture = texture
+        }
+        if let riverOverlayTexture {
+            let node = SKSpriteNode(texture: riverOverlayTexture, size: Self.renderedTileSize)
+            let direction = atan2(second.y - first.y, second.x - first.x)
+            let sixtyDegrees = CGFloat.pi / 3
+            node.zRotation = round((direction - sixtyDegrees) / sixtyDegrees) * sixtyDegrees
+            node.name = "river:overlay"
+            node.position = first
+            node.zPosition = 2
+            return node
+        }
+
+        let container = SKNode()
+        guard let path = riverPath(between: first, and: second) else { return container }
+        let border = SKShapeNode(path: path)
+        border.name = "river:border"
+        border.strokeColor = .init(red: 0.03, green: 0.12, blue: 0.17, alpha: 0.95)
+        border.lineCap = .round
+        container.addChild(border)
+        let water = SKShapeNode(path: path)
+        water.name = "river:water"
+        water.strokeColor = .init(red: 0.40, green: 0.84, blue: 0.94, alpha: 1)
+        water.lineCap = .round
+        container.addChild(water)
+        return container
     }
 
     private func updateRiverLineWidths() {
