@@ -18,6 +18,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var saves: [SaveMetadata] = []
     @Published private(set) var saveError: String?
     private let saveCatalog: any GameSaveCatalog
+    private let autosaveService: AutosaveService
 
     init(
         state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
@@ -30,6 +31,7 @@ final class GameStore: ObservableObject {
         world = loadedContent.scenario.world
         economy = EconomyState(players: loadedContent.scenario.world.players, startingGold: loadedContent.scenario.startingGold)
         self.saveCatalog = saveCatalog
+        autosaveService = AutosaveService(catalog: saveCatalog)
         refreshSaves()
     }
 
@@ -43,6 +45,10 @@ final class GameStore: ObservableObject {
 
     var journalItems: [JournalItem] {
         state.journal.enumerated().map { JournalItem(entry: $0.element, index: $0.offset) }
+    }
+
+    var resumableAutosave: SaveMetadata? {
+        saves.first { $0.kind == .autosave }
     }
 
     @discardableResult
@@ -76,14 +82,16 @@ final class GameStore: ObservableObject {
             economy = resolution.economy
             let delta = resolution.entries.map(\.amount).reduce(0, +)
             present("Економіку підраховано: \(delta >= 0 ? "+" : "")\(delta) монет.", severity: .success)
+            scheduleAutosave()
             return
         }
-        send(.advancePhase(playerID: state.activePlayer.id))
+        if send(.advancePhase(playerID: state.activePlayer.id)) { scheduleAutosave() }
     }
 
     func endTurn() {
         if send(.endTurn(playerID: state.activePlayer.id)) {
             selectedHexID = nil
+            scheduleAutosave()
         }
     }
 
@@ -93,6 +101,7 @@ final class GameStore: ObservableObject {
         {
             world.resetMovementCommands(for: playerID)
             present("Хід гравця \(state.activePlayer.displayName) розпочато.", severity: .information)
+            scheduleAutosave()
         }
     }
 
@@ -146,6 +155,7 @@ final class GameStore: ObservableObject {
             present("Столицю засновано. Хід наступного гравця.", severity: .success)
         }
         selectedHexID = nil
+        scheduleAutosave()
     }
 
     func resetMapCamera() {
@@ -177,6 +187,7 @@ final class GameStore: ObservableObject {
         pendingEncounter = resolution.encounter
         selectedHexID = resolution.encounter?.destination ?? previewRoute.hexIDs.last
         clearMovementPreview()
+        scheduleAutosave()
     }
 
     func resolvePendingBattle() {
@@ -196,6 +207,7 @@ final class GameStore: ObservableObject {
         battleReport = report
         pendingEncounter = nil
         present("Бій завершено. Звіт додано до журналу.", severity: .success)
+        scheduleAutosave()
     }
 
     func dismissBattleReport() {
@@ -296,6 +308,22 @@ final class GameStore: ObservableObject {
         notices.append(notice)
         if notices.count > 50 { notices.removeFirst(notices.count - 50) }
         if severity == .error { criticalNotice = notice }
+    }
+
+    private func scheduleAutosave() {
+        guard state.phase != .finished else { return }
+        let document = GameSaveDocument(
+            id: GameSaveDocument.autosaveID,
+            name: "Автозбереження",
+            kind: .autosave,
+            game: state,
+            world: world,
+            economy: economy,
+            selectedHexID: selectedHexID
+        )
+        Task {
+            if await autosaveService.save(document) { refreshSaves() }
+        }
     }
 
     private static func loadBundledContent() -> GameContentConfiguration {

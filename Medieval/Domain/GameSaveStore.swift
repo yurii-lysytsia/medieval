@@ -25,6 +25,7 @@ public struct SaveMetadata: Codable, Equatable, Sendable, Identifiable {
 
 public struct GameSaveDocument: Codable, Equatable, Sendable {
     public static let currentFormatVersion = 1
+    public static let autosaveID = UUID(uuidString: "00000000-0000-0000-0000-000000000051")!
 
     public let formatVersion: Int
     public let metadata: SaveMetadata
