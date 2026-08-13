@@ -1,5 +1,5 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct BattleConsequencesTests {
@@ -42,7 +42,7 @@ struct BattleConsequencesTests {
     private func world(capital: Bool) -> WorldState {
         var players = [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")]
         if !capital { players.append(WorldPlayer(id: "three", displayName: "Three")) }
-        return WorldState(players: players, hexes: [Hex(id: "origin", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true), Hex(id: "target", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains", isPassable: true)], units: [
+        return WorldState(players: players, hexes: [Hex(id: "origin", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"), Hex(id: "target", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains")], units: [
             Unit(id: "a-unit", ownerID: "one", typeID: "infantry", currentHitPoints: 10, location: .hex("origin")),
             Unit(id: "d-unit", ownerID: "two", typeID: "infantry", currentHitPoints: 10, location: .hex("target")),
         ], armies: [Army(id: "attacker", ownerID: "one", hexID: "origin", unitIDs: ["a-unit"]), Army(id: "defender", ownerID: "two", hexID: "target", unitIDs: ["d-unit"])], cities: capital ? [City(id: "capital", ownerID: "two", hexID: "target", levelID: "level-0", isCapital: true)] : [], phase: .combat)

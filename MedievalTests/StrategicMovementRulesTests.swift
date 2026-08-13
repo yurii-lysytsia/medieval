@@ -1,5 +1,5 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct StrategicMovementRulesTests {
@@ -54,10 +54,10 @@ struct StrategicMovementRulesTests {
 
     private var hexes: [Hex] {
         [
-            Hex(id: "origin", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true),
-            Hex(id: "empty", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains", isPassable: true),
-            Hex(id: "friendly", coordinate: HexCoordinate(q: 0, r: 1), terrainID: "plains", isPassable: true),
-            Hex(id: "enemy", coordinate: HexCoordinate(q: 1, r: 1), terrainID: "plains", isPassable: true),
+            Hex(id: "origin", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"),
+            Hex(id: "empty", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains"),
+            Hex(id: "friendly", coordinate: HexCoordinate(q: 0, r: 1), terrainID: "plains"),
+            Hex(id: "enemy", coordinate: HexCoordinate(q: 1, r: 1), terrainID: "plains"),
         ]
     }
 

@@ -71,7 +71,14 @@ struct GameRulesTests {
     }
 
     @Test func stateAndReplayAreCodableAndDeterministic() throws {
-        let actions: [GameAction] = [.endTurn(playerID: crown.id), .endTurn(playerID: union.id)]
+        // A turn walks economy → construction → movement → combat before it can
+        // end, so a faithful replay has to carry the phase steps too.
+        let actions: [GameAction] = [
+            .advancePhase(playerID: crown.id),
+            .advancePhase(playerID: crown.id),
+            .advancePhase(playerID: crown.id),
+            .endTurn(playerID: crown.id),
+        ]
         let state = try actions.reduce(GameState(players: [crown, union], seed: 42)) { state, action in
             try GameRules.apply(action, to: state).get()
         }
@@ -99,7 +106,7 @@ struct GameRulesTests {
         let replay = GameReplay(
             seed: 42,
             players: [crown, union],
-            actions: [.endTurn(playerID: crown.id), .endTurn(playerID: UUID())]
+            actions: [.advancePhase(playerID: crown.id), .advancePhase(playerID: UUID())]
         )
 
         #expect(throws: GameRuleError.playerIsNotActive) {

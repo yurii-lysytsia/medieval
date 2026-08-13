@@ -1,4 +1,4 @@
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct StrategicPathfinderTests {
@@ -50,10 +50,10 @@ struct StrategicPathfinderTests {
 
     private var hexes: [Hex] {
         [
-            Hex(id: "plain", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true),
-            Hex(id: "shallows", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "shallows", isPassable: true),
-            Hex(id: "forest", coordinate: HexCoordinate(q: 2, r: 0), terrainID: "forest", isPassable: true),
-            Hex(id: "deep", coordinate: HexCoordinate(q: 3, r: 0), terrainID: "deep-water", isPassable: false),
+            Hex(id: "plain", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"),
+            Hex(id: "shallows", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "shallows"),
+            Hex(id: "forest", coordinate: HexCoordinate(q: 2, r: 0), terrainID: "forest"),
+            Hex(id: "deep", coordinate: HexCoordinate(q: 3, r: 0), terrainID: "deep-water"),
         ]
     }
 

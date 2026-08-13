@@ -1,4 +1,4 @@
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct MovementPreviewTests {
@@ -21,7 +21,7 @@ struct MovementPreviewTests {
     private let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
     private let units = [UnitDefinition(id: "infantry", displayName: "Infantry", recruitmentCost: 20, upkeep: 2, hitPoints: 10, damage: 4, attackRange: 1, movement: 2, domain: .land)]
     private var hexes: [Hex] {
-        [Hex(id: "origin", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true), Hex(id: "target", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains", isPassable: true)]
+        [Hex(id: "origin", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"), Hex(id: "target", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains")]
     }
 
     private var map: StaticHexMap {

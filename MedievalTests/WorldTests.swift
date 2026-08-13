@@ -5,7 +5,7 @@ import Testing
 struct WorldTests {
     @Test func newTurnResetsOnlyActivePlayersMovementCommands() {
         let players = [WorldPlayer(id: "crown", displayName: "Crown"), WorldPlayer(id: "union", displayName: "Union")]
-        let hex = Hex(id: "h", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true)
+        let hex = Hex(id: "h", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")
         var world = WorldState(
             players: players,
             hexes: [hex],

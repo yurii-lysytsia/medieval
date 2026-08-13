@@ -1,5 +1,5 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct AutomaticBattleTests {
@@ -46,7 +46,7 @@ struct AutomaticBattleTests {
         UnitDefinition(id: "infantry", displayName: "Infantry", recruitmentCost: 20, upkeep: 2, hitPoints: 10, damage: 4, attackRange: 1, movement: 2, domain: .land),
         UnitDefinition(id: "archers", displayName: "Archers", recruitmentCost: 25, upkeep: 2, hitPoints: 7, damage: 3, attackRange: 3, movement: 2, domain: .land),
     ]
-    private func unit(_ id: UnitID, hp: Int, type: UnitTypeID = "infantry") -> MedievalDomain.Unit {
-        MedievalDomain.Unit(id: id, ownerID: id.rawValue.hasPrefix("a") ? "one" : "two", typeID: type, currentHitPoints: hp, location: .hex("h"))
+    private func unit(_ id: UnitID, hp: Int, type: UnitTypeID = "infantry") -> Medieval.Unit {
+        Medieval.Unit(id: id, ownerID: id.rawValue.hasPrefix("a") ? "one" : "two", typeID: type, currentHitPoints: hp, location: .hex("h"))
     }
 }

@@ -1,4 +1,4 @@
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct BattleContextRulesTests {
@@ -24,8 +24,8 @@ struct BattleContextRulesTests {
     private let buildings = [BuildingDefinition(id: "walls", displayName: "Walls", constructionCost: 1, upkeep: 1, incomeModifier: 0, defenseModifier: 35)]
     private var world: WorldState {
         WorldState(players: [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")], hexes: [
-            Hex(id: "west", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "forest", isPassable: true),
-            Hex(id: "east", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "forest", isPassable: true),
+            Hex(id: "west", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "forest"),
+            Hex(id: "east", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "forest"),
         ], riverBoundaries: [RiverBoundary(id: "r", boundary: HexBoundary(firstHexID: "west", secondHexID: "east"))], units: [
             Unit(id: "cav", ownerID: "one", typeID: "cavalry", currentHitPoints: 9, location: .hex("west")),
             Unit(id: "archer", ownerID: "two", typeID: "archers", currentHitPoints: 7, location: .hex("east")),

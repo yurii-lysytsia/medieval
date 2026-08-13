@@ -1,5 +1,5 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct RecruitmentRulesTests {
@@ -44,7 +44,7 @@ struct RecruitmentRulesTests {
         id: "map",
         displayName: "Map",
         bounds: HexMapBounds(minimumQ: 0, maximumQ: 0, minimumR: 0, maximumR: 0),
-        hexes: [Hex(id: "home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true)],
+        hexes: [Hex(id: "home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")],
         neighborhoods: [HexNeighborhood(hexID: "home", neighborHexIDs: [])]
     )
 

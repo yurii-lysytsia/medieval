@@ -1,4 +1,4 @@
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct JournalPresentationTests {

@@ -1,5 +1,5 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct ArmyOperationsTests {
@@ -76,10 +76,10 @@ struct ArmyOperationsTests {
             displayName: "Map",
             bounds: HexMapBounds(minimumQ: 0, maximumQ: 3, minimumR: 0, maximumR: 0),
             hexes: [
-                Hex(id: "land", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true),
-                Hex(id: "shallows", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "shallows", isPassable: true),
-                Hex(id: "deep", coordinate: HexCoordinate(q: 2, r: 0), terrainID: "deep-water", isPassable: false),
-                Hex(id: "far-land", coordinate: HexCoordinate(q: 3, r: 0), terrainID: "plains", isPassable: true),
+                Hex(id: "land", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"),
+                Hex(id: "shallows", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "shallows"),
+                Hex(id: "deep", coordinate: HexCoordinate(q: 2, r: 0), terrainID: "deep-water"),
+                Hex(id: "far-land", coordinate: HexCoordinate(q: 3, r: 0), terrainID: "plains"),
             ],
             neighborhoods: [
                 HexNeighborhood(hexID: "land", neighborHexIDs: ["shallows"]),

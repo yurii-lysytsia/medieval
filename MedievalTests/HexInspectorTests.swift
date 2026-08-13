@@ -1,9 +1,9 @@
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct HexInspectorTests {
     @Test func exposesTerrainRiverCityBuildingsIncomeAndArmyMovement() throws {
-        let content = try GameContentLoader.loadMVP(from: .module)
+        let content = try GameContentLoader.loadMVP()
         let world = WorldState(
             players: [WorldPlayer(id: "crown", displayName: "Корона"), WorldPlayer(id: "union", displayName: "Союз")],
             hexes: content.scenario.map.hexes,
@@ -27,7 +27,7 @@ struct HexInspectorTests {
     }
 
     @Test func missingObjectsAreExplicitlyRepresentedAsEmpty() throws {
-        let content = try GameContentLoader.loadMVP(from: .module)
+        let content = try GameContentLoader.loadMVP()
         let inspection = HexInspection.inspect("h-1-1", map: content.scenario.map, world: content.scenario.world, content: content)
 
         #expect(inspection?.city == nil)

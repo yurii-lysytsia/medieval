@@ -270,7 +270,7 @@ struct GameContentValidatorTests {
     private func world(
         hexes: [Hex]? = nil,
         riverBoundaries: [RiverBoundary] = [],
-        units: [MedievalDomain.Unit] = [],
+        units: [Medieval.Unit] = [],
         armies: [Army] = [],
         cities: [City] = []
     ) -> WorldState {

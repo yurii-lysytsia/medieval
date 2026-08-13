@@ -1,5 +1,5 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct VictoryRulesTests {
@@ -46,8 +46,8 @@ struct VictoryRulesTests {
         WorldState(
             players: [WorldPlayer(id: "crown", displayName: "Crown"), WorldPlayer(id: "union", displayName: "Union")],
             hexes: [
-                Hex(id: "crown-home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true),
-                Hex(id: "union-home", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains", isPassable: true),
+                Hex(id: "crown-home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains"),
+                Hex(id: "union-home", coordinate: HexCoordinate(q: 1, r: 0), terrainID: "plains"),
             ],
             units: [Unit(id: "union-unit", ownerID: "union", typeID: "infantry", currentHitPoints: 10, location: .hex("union-home"))],
             armies: [Army(id: "union-army", ownerID: "union", hexID: "union-home", unitIDs: ["union-unit"])],

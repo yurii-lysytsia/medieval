@@ -1,10 +1,10 @@
 import Foundation
-@testable import MedievalDomain
+@testable import Medieval
 import Testing
 
 struct UnitModelsTests {
     @Test func fourMVPUnitTypesLoadWithConfiguredCharacteristics() throws {
-        let definitions = try GameContentLoader.loadMVP(from: .module).units
+        let definitions = try GameContentLoader.loadMVP().units
         let byID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0) })
 
         #expect(Set(byID.keys) == ["infantry", "archers", "cavalry", "ship"])
