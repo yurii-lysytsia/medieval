@@ -17,6 +17,7 @@ public enum EconomyEntryKind: String, Codable, Equatable, Sendable {
     case buildingUpkeep
     case construction
     case cityUpgrade
+    case recruitment
 }
 
 public struct EconomyJournalEntry: Codable, Equatable, Sendable, Identifiable {
