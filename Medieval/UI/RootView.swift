@@ -177,4 +177,13 @@ struct GameScreen: View {
         case .draw: "Обидві сторони знищено"
         }
     }
+
+    private func playerColor(_ color: PlayerColor) -> Color {
+        switch color {
+        case .red: .red
+        case .blue: .blue
+        case .green: .green
+        case .gold: .yellow
+        }
+    }
 }

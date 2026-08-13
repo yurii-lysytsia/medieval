@@ -6,6 +6,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var state: GameState
     @Published private(set) var content: GameContentConfiguration
     @Published private(set) var world: WorldState
+    @Published private(set) var economy: EconomyState
     @Published private(set) var selectedHexID: HexID?
     @Published private(set) var movementPreview: MovementPreview?
     @Published private(set) var previewRoute: MovementRoute?
@@ -21,6 +22,11 @@ final class GameStore: ObservableObject {
         self.state = state
         self.content = loadedContent
         world = loadedContent.scenario.world
+        economy = EconomyState(players: loadedContent.scenario.world.players, startingGold: loadedContent.scenario.startingGold)
+    }
+
+    var hud: TurnHUDSnapshot {
+        TurnHUDSnapshot(state: state, economy: economy, hasBlockingPresentation: battleReport != nil || pendingEncounter != nil)
     }
 
     @discardableResult
@@ -32,7 +38,24 @@ final class GameStore: ObservableObject {
     }
 
     func advancePhase() {
-        guard battleReport == nil else { return }
+        guard hud.canAdvance else { return }
+        if state.phase == .economy,
+           let playerID = state.activePlayer.worldPlayerID,
+           case let .success(resolution) = EconomyRules.resolve(
+               for: playerID,
+               in: world,
+               economy: economy,
+               terrain: content.terrain,
+               cityLevels: content.cityLevels,
+               units: content.units,
+               buildings: content.buildings
+           ),
+           send(.advancePhase(playerID: state.activePlayer.id))
+        {
+            world = resolution.world
+            economy = resolution.economy
+            return
+        }
         send(.advancePhase(playerID: state.activePlayer.id))
     }
 
@@ -101,6 +124,11 @@ final class GameStore: ObservableObject {
         cameraResetToken += 1
     }
 
+    func cancelSelection() {
+        selectedHexID = nil
+        clearMovementPreview()
+    }
+
     func confirmMovement() {
         guard let armyID = movementPreview?.armyID, let previewRoute else { return }
         let result = StrategicMovementRules.confirmArmyMovement(
@@ -162,6 +190,7 @@ final class GameStore: ObservableObject {
             WorldPlayer(id: WorldPlayerID(rawValue: "player-\(index + 1)"), displayName: choice.name)
         }
         world.configurePlayers(worldPlayers)
+        economy = EconomyState(players: worldPlayers, startingGold: content.scenario.startingGold)
         let players = worldPlayers.enumerated().map { index, worldPlayer in
             Player(displayName: choices[index].name, worldPlayerID: worldPlayer.id, color: choices[index].color)
         }
