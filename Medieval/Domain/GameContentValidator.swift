@@ -84,6 +84,7 @@ public enum GameContentValidator {
         }
         for building in configuration.buildings {
             try validateMinimum(building.constructionCost, field: "building \(building.id.rawValue) construction cost", minimum: 0)
+            try validateMinimum(building.upkeep, field: "building \(building.id.rawValue) upkeep", minimum: 0)
         }
         for army in configuration.scenario.world.armies {
             try validateMinimum(army.quantity, field: "army \(army.id.rawValue) quantity", minimum: 1)

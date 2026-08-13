@@ -291,4 +291,8 @@ public struct WorldState: Codable, Equatable, Sendable {
             phase = .economy
         }
     }
+
+    mutating func advanceFromEconomy() {
+        phase = .construction
+    }
 }

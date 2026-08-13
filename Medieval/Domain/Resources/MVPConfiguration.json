@@ -136,6 +136,7 @@
       "id": "market",
       "displayName": "Market",
       "constructionCost": 60,
+      "upkeep": 1,
       "incomeModifier": 3,
       "defenseModifier": 0
     },
@@ -143,6 +144,7 @@
       "id": "barracks",
       "displayName": "Barracks",
       "constructionCost": 75,
+      "upkeep": 2,
       "incomeModifier": 0,
       "defenseModifier": 1
     },
@@ -150,6 +152,7 @@
       "id": "walls",
       "displayName": "Walls",
       "constructionCost": 100,
+      "upkeep": 1,
       "incomeModifier": 0,
       "defenseModifier": 4
     },
@@ -157,6 +160,7 @@
       "id": "workshop",
       "displayName": "Workshop",
       "constructionCost": 80,
+      "upkeep": 1,
       "incomeModifier": 2,
       "defenseModifier": 0
     }

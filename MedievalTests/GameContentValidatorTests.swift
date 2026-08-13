@@ -206,7 +206,7 @@ struct GameContentValidatorTests {
             ],
             units: units ?? [unit()],
             cityLevels: [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1)],
-            buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, incomeModifier: 0, defenseModifier: 0)],
+            buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 0, incomeModifier: 0, defenseModifier: 0)],
             scenario: ScenarioConfiguration(
                 id: "test",
                 displayName: "Test",

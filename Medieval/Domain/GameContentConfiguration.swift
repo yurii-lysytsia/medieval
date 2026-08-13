@@ -74,6 +74,7 @@ public struct BuildingDefinition: Codable, Equatable, Sendable, Identifiable {
     public let id: BuildingTypeID
     public let displayName: String
     public let constructionCost: Int
+    public let upkeep: Int
     public let incomeModifier: Int
     public let defenseModifier: Int
 
@@ -81,12 +82,14 @@ public struct BuildingDefinition: Codable, Equatable, Sendable, Identifiable {
         id: BuildingTypeID,
         displayName: String,
         constructionCost: Int,
+        upkeep: Int,
         incomeModifier: Int,
         defenseModifier: Int
     ) {
         self.id = id
         self.displayName = displayName
         self.constructionCost = constructionCost
+        self.upkeep = upkeep
         self.incomeModifier = incomeModifier
         self.defenseModifier = defenseModifier
     }
