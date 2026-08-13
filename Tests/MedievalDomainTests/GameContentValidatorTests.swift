@@ -66,6 +66,22 @@ struct GameContentValidatorTests {
         #expect(error == .missingReference(entity: "map hex", id: "void", reference: "terrain \"swamp\""))
     }
 
+    @Test func citiesOnUnsuitableTerrainAreRejectedWhileLoading() throws {
+        let desert = Hex(id: "desert", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "desert")
+        let city = City(id: "city-1", ownerID: "one", hexID: "desert", levelID: "village")
+        let configuration = fixture(
+            terrain: [
+                TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+                TerrainDefinition(id: "desert", displayName: "Desert", movementCost: 2, defenseModifier: 0, incomeModifier: -2, isPassable: true, isCityBuildable: false),
+            ],
+            world: world(hexes: [desert], cities: [city])
+        )
+
+        let error = try validationError(for: configuration)
+
+        #expect(error == .unsuitableCityPlacement(hexID: "desert", terrainID: "desert"))
+    }
+
     private func validationError(for configuration: GameContentConfiguration) throws -> GameContentValidationError {
         let data = try JSONEncoder().encode(configuration)
         do {
@@ -161,14 +177,15 @@ struct GameContentValidatorTests {
     }
 
     private func fixture(
+        terrain: [TerrainDefinition]? = nil,
         units: [UnitDefinition]? = nil,
         world: WorldState? = nil
     ) -> GameContentConfiguration {
         let resolvedWorld = world ?? self.world()
         return GameContentConfiguration(
-            terrain: [
-                TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, incomeModifier: 0, isPassable: true),
-                TerrainDefinition(id: "ocean", displayName: "Ocean", movementCost: 0, incomeModifier: 0, isPassable: false),
+            terrain: terrain ?? [
+                TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true),
+                TerrainDefinition(id: "ocean", displayName: "Ocean", movementCost: 0, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
             ],
             units: units ?? [unit()],
             cityLevels: [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1)],
@@ -216,11 +233,12 @@ struct GameContentValidatorTests {
         )
     }
 
-    private func world(hexes: [Hex]? = nil, armies: [Army] = []) -> WorldState {
+    private func world(hexes: [Hex]? = nil, armies: [Army] = [], cities: [City] = []) -> WorldState {
         WorldState(
             players: [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")],
             hexes: hexes ?? [landHex()],
-            armies: armies
+            armies: armies,
+            cities: cities
         )
     }
 

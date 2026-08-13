@@ -8,6 +8,7 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
     case coordinateOutOfBounds(hexID: HexID, axis: String, value: Int, minimum: Int, maximum: Int)
     case contradictoryHex(hexID: HexID)
     case asymmetricNeighborhood(hexID: HexID, neighborHexID: HexID)
+    case unsuitableCityPlacement(hexID: HexID, terrainID: TerrainID)
 
     public var errorDescription: String? {
         switch self {
@@ -25,6 +26,8 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
             "Hex \"\(hexID.rawValue)\" is described differently by the map and the world."
         case let .asymmetricNeighborhood(hexID, neighborHexID):
             "Hex \"\(hexID.rawValue)\" lists \"\(neighborHexID.rawValue)\" as a neighbour, but not the other way round."
+        case let .unsuitableCityPlacement(hexID, terrainID):
+            "City cannot be placed on hex \"\(hexID.rawValue)\" with terrain \"\(terrainID.rawValue)\"."
         }
     }
 }
@@ -199,6 +202,9 @@ public enum GameContentValidator {
             }
             guard terrainByID[hex.terrainID]?.isPassable == true else {
                 throw GameContentValidationError.impassablePlacement(entity: "City \"\(city.id.rawValue)\"", hexID: hex.id)
+            }
+            guard let terrain = terrainByID[hex.terrainID], terrain.isCityBuildable else {
+                throw GameContentValidationError.unsuitableCityPlacement(hexID: hex.id, terrainID: hex.terrainID)
             }
         }
         for building in world.buildings {

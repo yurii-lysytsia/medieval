@@ -2,59 +2,75 @@
   "terrain": [
     {
       "id": "plains",
-      "displayName": "Plains",
+      "displayName": "Рівнина",
       "movementCost": 1,
+      "defenseModifier": 0,
       "incomeModifier": 2,
-      "isPassable": true
-    },
-    {
-      "id": "forest",
-      "displayName": "Forest",
-      "movementCost": 2,
-      "incomeModifier": 1,
-      "isPassable": true
-    },
-    {
-      "id": "hills",
-      "displayName": "Hills",
-      "movementCost": 2,
-      "incomeModifier": 0,
-      "isPassable": true
-    },
-    {
-      "id": "mountains",
-      "displayName": "Mountains",
-      "movementCost": 3,
-      "incomeModifier": -1,
-      "isPassable": true
-    },
-    {
-      "id": "swamp",
-      "displayName": "Swamp",
-      "movementCost": 3,
-      "incomeModifier": -1,
-      "isPassable": true
+      "isPassable": true,
+      "isCityBuildable": true
     },
     {
       "id": "desert",
-      "displayName": "Desert",
+      "displayName": "Пустеля",
       "movementCost": 2,
+      "defenseModifier": 0,
       "incomeModifier": -2,
-      "isPassable": true
+      "isPassable": true,
+      "isCityBuildable": false
     },
     {
-      "id": "coast",
-      "displayName": "Coast",
-      "movementCost": 1,
+      "id": "forest",
+      "displayName": "Ліс",
+      "movementCost": 2,
+      "defenseModifier": 1,
       "incomeModifier": 1,
-      "isPassable": true
+      "isPassable": true,
+      "isCityBuildable": true
     },
     {
-      "id": "ocean",
-      "displayName": "Ocean",
-      "movementCost": 0,
+      "id": "hills",
+      "displayName": "Пагорби",
+      "movementCost": 2,
+      "defenseModifier": 1,
       "incomeModifier": 0,
-      "isPassable": false
+      "isPassable": true,
+      "isCityBuildable": true
+    },
+    {
+      "id": "mountains",
+      "displayName": "Гори",
+      "movementCost": 3,
+      "defenseModifier": 2,
+      "incomeModifier": -1,
+      "isPassable": true,
+      "isCityBuildable": false
+    },
+    {
+      "id": "swamp",
+      "displayName": "Болота",
+      "movementCost": 3,
+      "defenseModifier": 1,
+      "incomeModifier": -1,
+      "isPassable": true,
+      "isCityBuildable": false
+    },
+    {
+      "id": "shallows",
+      "displayName": "Мілина",
+      "movementCost": 2,
+      "defenseModifier": 0,
+      "incomeModifier": 0,
+      "isPassable": true,
+      "isCityBuildable": false
+    },
+    {
+      "id": "deep-water",
+      "displayName": "Глибока вода",
+      "movementCost": 0,
+      "defenseModifier": 0,
+      "incomeModifier": 0,
+      "isPassable": false,
+      "isCityBuildable": false
     }
   ],
   "units": [
@@ -189,7 +205,7 @@
             "q": 1,
             "r": 1
           },
-          "terrainID": "mountains"
+          "terrainID": "hills"
         }
       ],
       "neighborhoods": [
@@ -267,7 +283,7 @@
             "q": 1,
             "r": 1
           },
-          "terrainID": "mountains"
+          "terrainID": "hills"
         }
       ],
       "riverBoundaries": [

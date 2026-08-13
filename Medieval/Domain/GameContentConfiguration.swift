@@ -4,15 +4,27 @@ public struct TerrainDefinition: Codable, Equatable, Sendable, Identifiable {
     public let id: TerrainID
     public let displayName: String
     public let movementCost: Int
+    public let defenseModifier: Int
     public let incomeModifier: Int
     public let isPassable: Bool
+    public let isCityBuildable: Bool
 
-    public init(id: TerrainID, displayName: String, movementCost: Int, incomeModifier: Int, isPassable: Bool) {
+    public init(
+        id: TerrainID,
+        displayName: String,
+        movementCost: Int,
+        defenseModifier: Int,
+        incomeModifier: Int,
+        isPassable: Bool,
+        isCityBuildable: Bool
+    ) {
         self.id = id
         self.displayName = displayName
         self.movementCost = movementCost
+        self.defenseModifier = defenseModifier
         self.incomeModifier = incomeModifier
         self.isPassable = isPassable
+        self.isCityBuildable = isCityBuildable
     }
 }
 

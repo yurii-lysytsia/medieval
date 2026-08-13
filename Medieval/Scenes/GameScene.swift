@@ -245,13 +245,22 @@ final class GameScene: SKScene {
         return path
     }
 
+    /// One colour per terrain type in the MVP content.
+    ///
+    /// The fallback exists only for terrain the content adds without a colour
+    /// here — validation already rejects terrain that nothing defines, so it
+    /// should never show up in a shipped map.
     private func terrainColor(_ id: TerrainID) -> SKColor {
         switch id.rawValue {
+        case "plains": .init(red: 0.35, green: 0.51, blue: 0.25, alpha: 1)
+        case "desert": .init(red: 0.76, green: 0.68, blue: 0.42, alpha: 1)
         case "forest": .init(red: 0.18, green: 0.42, blue: 0.22, alpha: 1)
         case "hills": .init(red: 0.48, green: 0.39, blue: 0.23, alpha: 1)
         case "mountains": .init(red: 0.42, green: 0.43, blue: 0.46, alpha: 1)
-        case "ocean": .init(red: 0.12, green: 0.29, blue: 0.48, alpha: 1)
-        default: .init(red: 0.35, green: 0.51, blue: 0.25, alpha: 1)
+        case "swamp": .init(red: 0.30, green: 0.35, blue: 0.22, alpha: 1)
+        case "shallows": .init(red: 0.28, green: 0.53, blue: 0.63, alpha: 1)
+        case "deep-water": .init(red: 0.12, green: 0.29, blue: 0.48, alpha: 1)
+        default: .init(red: 0.55, green: 0.20, blue: 0.55, alpha: 1)
         }
     }
 }
