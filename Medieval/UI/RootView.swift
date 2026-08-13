@@ -186,4 +186,8 @@ struct GameScreen: View {
         case .gold: .yellow
         }
     }
+
+    private func signed(_ value: Int) -> String {
+        value >= 0 ? "+\(value)" : "\(value)"
+    }
 }

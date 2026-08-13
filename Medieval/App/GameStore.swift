@@ -29,6 +29,10 @@ final class GameStore: ObservableObject {
         TurnHUDSnapshot(state: state, economy: economy, hasBlockingPresentation: battleReport != nil || pendingEncounter != nil)
     }
 
+    var selectedInspection: HexInspection? {
+        selectedHexID.flatMap { HexInspection.inspect($0, map: content.scenario.map, world: world, content: content) }
+    }
+
     @discardableResult
     func send(_ action: GameAction) -> Bool {
         guard case let .success(next) = GameRules.apply(action, to: state) else { return false }
