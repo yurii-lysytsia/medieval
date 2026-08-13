@@ -396,6 +396,18 @@ public struct WorldState: Codable, Equatable, Sendable {
         armies.removeAll { $0.id == armyID }
     }
 
+    mutating func removeUnits(_ unitIDs: Set<UnitID>) {
+        units.removeAll { unitIDs.contains($0.id) }
+    }
+
+    /// Hands a city to a new owner, keeping its level and buildings intact —
+    /// a captured city is taken, not razed.
+    mutating func transferCity(_ cityID: CityID, to playerID: WorldPlayerID) {
+        guard let index = cities.firstIndex(where: { $0.id == cityID }) else { return }
+        let city = cities[index]
+        cities[index] = City(id: city.id, ownerID: playerID, hexID: city.hexID, levelID: city.levelID, isCapital: city.isCapital)
+    }
+
     mutating func removeCapital(for playerID: WorldPlayerID) {
         let cityIDs = Set(cities.filter { $0.ownerID == playerID }.map(\.id))
         cities.removeAll { cityIDs.contains($0.id) }
