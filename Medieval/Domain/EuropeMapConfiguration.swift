@@ -14,14 +14,8 @@ private struct EuropeMapTile: Decodable {
 }
 
 public extension GameContentLoader {
-    static let europeMapResourceName = "hex-map"
-
-    /// Builds the playable Europe scenario from the raster-map manifest.
-    ///
-    /// The manifest is the single source of truth for both rendering and game
-    /// rules: its row/column IDs match the PNG names, while its axial
-    /// coordinates generate movement neighborhoods without duplicating 1200
-    /// cells in the balance configuration.
+    /// Builds the playable Europe scenario from an external manifest. Kept as
+    /// a decoding entry point for content validation and focused tests.
     static func decodeEuropeMap(
         _ data: Data,
         basedOn base: GameContentConfiguration
@@ -33,6 +27,13 @@ public extension GameContentLoader {
             throw GameContentLoadingError.invalidJSON(error.localizedDescription)
         }
 
+        return try makeEuropeMap(from: manifest, basedOn: base)
+    }
+
+    private static func makeEuropeMap(
+        from manifest: EuropeMapManifest,
+        basedOn base: GameContentConfiguration
+    ) throws -> GameContentConfiguration {
         guard manifest.rows > 0,
               manifest.columns > 0,
               manifest.tiles.count == manifest.rows * manifest.columns
@@ -125,13 +126,78 @@ public extension GameContentLoader {
 
     static func loadEuropeMap() throws -> GameContentConfiguration {
         let base = try loadMVP()
-        guard let url = Bundle.main.url(forResource: europeMapResourceName, withExtension: "json") else {
-            throw GameContentLoadingError.missingResource(europeMapResourceName)
+        let columns = 40
+        guard europeTerrainRows.allSatisfy({ $0.count == columns }) else {
+            throw GameContentLoadingError.invalidJSON("Europe terrain rows have inconsistent widths.")
         }
-        guard let data = try? Data(contentsOf: url) else {
-            throw GameContentLoadingError.unreadableData(europeMapResourceName)
+
+        let tiles = try europeTerrainRows.enumerated().flatMap { row, terrainRow in
+            try terrainRow.enumerated().map { column, marker in
+                guard let terrain = terrainName(for: marker) else {
+                    throw GameContentLoadingError.invalidJSON("Unknown Europe terrain marker: \(marker).")
+                }
+                return EuropeMapTile(
+                    id: String(format: "r%02d-c%02d", row, column),
+                    q: column - (row - row % 2) / 2,
+                    r: row,
+                    terrain: terrain
+                )
+            }
         }
-        return try decodeEuropeMap(data, basedOn: base)
+        let manifest = EuropeMapManifest(
+            rows: europeTerrainRows.count,
+            columns: columns,
+            tiles: tiles
+        )
+        return try makeEuropeMap(from: manifest, basedOn: base)
+    }
+
+    /// Compact, code-owned terrain layout for the 40×30 Europe campaign.
+    /// Rendering is intentionally independent from the removed MapHexes tiles:
+    /// each marker selects one of the reusable textures in Assets/Hexes.
+    private static let europeTerrainRows = [
+        "~~~~~~~~~~~mmmmfhfpp~~~pfp~~ppppfffffppp",
+        "~~~~~~~~~~~mmpppfppp~~~~~pfffpfffppfffpp",
+        "~~~~m~~~~~~~pp~~pppp~~~~ffffppfppppfffff",
+        "~~~pmp~~~~~~~~pphpp~~~~~~ff~hppppfpfpppf",
+        "~~~~pf~~~~~~~~p~~p~~~~~ffpphpppppppfpfff",
+        "~mp~mp~~~~~~~~p~~~~~~~~fhpppmppppfppfffp",
+        "~pp~~pp~~~~~~~~pf~~pppffhppppppfpppffffh",
+        "~fp~fppp~~~phppfpppfpphppppppppppppfffhf",
+        "~pp~pppp~~~phpppppppppppppfpfppfpppffphf",
+        "~~~~ppfp~pppppfppfpppfpppppfffpppfpfpfhf",
+        "~~~~~~~~~fpppppppppppppppppppppppppfhpfp",
+        "~~~~~~~ppppppfpppfffpffpppppppppppppfhhf",
+        "~~~~~pfpfpfpppppfppfppppfffpppppfppfffpf",
+        "~~~~~~ppppppmppmmmmfppppmpfppppppp~phhpp",
+        "~~~~~~~pppppmpmmmmppmmpppppmpmppp~~~pppp",
+        "~~~~~~~fpppfmmmmpp~ffmppffpmff~~pp~pfmpp",
+        "~~~~~~~~pppfpmpppp~~ffmppfmppp~~pp~~pfmm",
+        "~~~~~~mfmmppp~~fpf~~fmfpmmfpp~~~~~~~~ffm",
+        "~~fpppdfffm~~~p~ppp~~~mmppppf~~~~~~~~~ff",
+        "~ffpddfdpp~~~~~~~ppp~~mpmffpp~~fpff~~pfm",
+        "~~fpppmpp~~~~~p~~~~ppp~mpf~~~pffdpmpffff",
+        "~~ppdddpp~~~~~p~~~~f~~mp~~~ppfmmpdmmmmfm",
+        "~~ppddddd~~~~~p~~~~~p~~mp~~pppddppddddpp",
+        "~~pffmmd~~~~~~~~~pmp~~~mp~~pdppp~pmpfm~m",
+        "~~fppmmd~~~~~~~p~~~p~~~~m~~~pfpfpfpppdpd",
+        "~~~~m~~~~dpppppdp~~~~~~~~~~~~p~pp~~pfdfm",
+        "~~~~~~~~~pddddddmd~~~~~~~mp~~~~~~~~ddddd",
+        "~~~~p~~~ddmmmmmmp~~~~~~~~~~~~~~~~~dddddm",
+        "~~~~pfdppdddpmddp~~~~~~~~~~~~~~~~~~pddfd",
+        "~~~mmmmmmmmmmmmmmmmm~~mmm~~~~~~~~~mmmmmm",
+    ]
+
+    private static func terrainName(for marker: Character) -> String? {
+        switch marker {
+        case "~": "water"
+        case "p": "plains"
+        case "f": "forest"
+        case "h": "hills"
+        case "m": "mountains"
+        case "d": "desert"
+        default: nil
+        }
     }
 
     private static func terrainID(
