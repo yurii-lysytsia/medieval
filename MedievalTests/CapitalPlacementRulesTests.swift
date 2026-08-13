@@ -51,7 +51,7 @@ struct CapitalPlacementRulesTests {
     }
 
     private let cityLevels = [
-        CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1),
+        CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1, upgradeCost: 0),
     ]
 
     private let terrain = [

@@ -15,6 +15,8 @@ public enum EconomyEntryKind: String, Codable, Equatable, Sendable {
     case buildingIncome
     case armyUpkeep
     case buildingUpkeep
+    case construction
+    case cityUpgrade
 }
 
 public struct EconomyJournalEntry: Codable, Equatable, Sendable, Identifiable {
@@ -77,6 +79,19 @@ public struct EconomyState: Codable, Equatable, Sendable {
         treasuries[index].coins += recorded.map(\.amount).reduce(0, +)
         journal.append(contentsOf: recorded)
         return recorded
+    }
+
+    /// Records a purchase, going through `apply` so it is numbered like every
+    /// other journal entry. Spending used to mint its own ids from player, kind
+    /// and source, which left the journal carrying two competing id schemes.
+    @discardableResult
+    mutating func spend(_ amount: Int, for playerID: WorldPlayerID, kind: EconomyEntryKind, source: String) -> Bool {
+        guard canAfford(amount, for: playerID) else { return false }
+        let recorded = apply(
+            [EconomyJournalEntry(id: source, playerID: playerID, kind: kind, source: source, amount: -amount)],
+            for: playerID
+        )
+        return !recorded.isEmpty
     }
 }
 

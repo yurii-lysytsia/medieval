@@ -61,12 +61,23 @@ public struct CityLevelDefinition: Codable, Equatable, Sendable, Identifiable {
     public let displayName: String
     public let baseIncome: Int
     public let buildingSlots: Int
+    public let upgradeCost: Int
+    public let requiredBuildingIDs: [BuildingTypeID]
 
-    public init(id: CityLevelID, displayName: String, baseIncome: Int, buildingSlots: Int) {
+    public init(
+        id: CityLevelID,
+        displayName: String,
+        baseIncome: Int,
+        buildingSlots: Int,
+        upgradeCost: Int,
+        requiredBuildingIDs: [BuildingTypeID] = []
+    ) {
         self.id = id
         self.displayName = displayName
         self.baseIncome = baseIncome
         self.buildingSlots = buildingSlots
+        self.upgradeCost = upgradeCost
+        self.requiredBuildingIDs = requiredBuildingIDs
     }
 }
 

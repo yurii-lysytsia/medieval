@@ -107,6 +107,12 @@ public enum GameContentValidator {
         let map = configuration.scenario.map
         let mapHexIDs = Set(map.hexes.map(\.id))
 
+        for level in configuration.cityLevels {
+            for buildingID in level.requiredBuildingIDs {
+                try validateReference(buildingID, in: buildingTypeIDs, entity: "city level", id: level.id.rawValue, reference: "required building")
+            }
+        }
+
         for hex in map.hexes {
             if !(map.bounds.minimumQ ... map.bounds.maximumQ).contains(hex.coordinate.q) {
                 throw GameContentValidationError.coordinateOutOfBounds(

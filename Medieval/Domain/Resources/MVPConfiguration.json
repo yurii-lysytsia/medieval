@@ -116,22 +116,43 @@
       "id": "village",
       "displayName": "Village",
       "baseIncome": 4,
-      "buildingSlots": 1
+      "buildingSlots": 1,
+      "upgradeCost": 0,
+      "requiredBuildingIDs": []
     },
     {
       "id": "town",
       "displayName": "Town",
       "baseIncome": 8,
-      "buildingSlots": 2
+      "buildingSlots": 4,
+      "upgradeCost": 100,
+      "requiredBuildingIDs": [
+        "town-hall"
+      ]
     },
     {
       "id": "city",
       "displayName": "City",
       "baseIncome": 14,
-      "buildingSlots": 4
+      "buildingSlots": 4,
+      "upgradeCost": 220,
+      "requiredBuildingIDs": [
+        "town-hall",
+        "barracks",
+        "market",
+        "walls"
+      ]
     }
   ],
   "buildings": [
+    {
+      "id": "town-hall",
+      "displayName": "Town Hall",
+      "constructionCost": 45,
+      "upkeep": 1,
+      "incomeModifier": 1,
+      "defenseModifier": 0
+    },
     {
       "id": "market",
       "displayName": "Market",
@@ -155,14 +176,6 @@
       "upkeep": 1,
       "incomeModifier": 0,
       "defenseModifier": 4
-    },
-    {
-      "id": "workshop",
-      "displayName": "Workshop",
-      "constructionCost": 80,
-      "upkeep": 1,
-      "incomeModifier": 2,
-      "defenseModifier": 0
     }
   ],
   "scenario": {

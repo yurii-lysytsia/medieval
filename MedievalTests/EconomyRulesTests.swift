@@ -19,7 +19,7 @@ struct EconomyRulesTests {
             in: world,
             economy: economy,
             terrain: [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 2, isPassable: true, isCityBuildable: true)],
-            cityLevels: [CityLevelDefinition(id: "town", displayName: "Town", baseIncome: 8, buildingSlots: 2)],
+            cityLevels: [CityLevelDefinition(id: "town", displayName: "Town", baseIncome: 8, buildingSlots: 2, upgradeCost: 0)],
             units: [UnitDefinition(id: "spearmen", displayName: "Spearmen", recruitmentCost: 1, upkeep: 1, attack: 1, defense: 1, movement: 1)],
             buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 1, incomeModifier: 3, defenseModifier: 0)]
         ).get()
@@ -45,7 +45,7 @@ struct EconomyRulesTests {
         // Player, kind and source repeat every turn the same city pays out, so
         // identity has to come from somewhere else.
         let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
-        let cityLevels = [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 4, buildingSlots: 1)]
+        let cityLevels = [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 4, buildingSlots: 1, upgradeCost: 0)]
         let hexes = [Hex(id: "home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")]
         let cities = [City(id: "capital", ownerID: "crown", hexID: "home", levelID: "village", isCapital: true)]
         var economy = EconomyState(players: players, startingGold: 0)
@@ -65,6 +65,33 @@ struct EconomyRulesTests {
 
         #expect(economy.journal.count == 3)
         #expect(Set(economy.journal.map(\.id)).count == 3)
+    }
+
+    @Test func spendingSharesTheJournalNumberingWithIncome() throws {
+        // Purchases used to mint their own ids, so the journal carried two
+        // competing schemes and only one of them was collision-free.
+        let terrain = [TerrainDefinition(id: "plains", displayName: "Plains", movementCost: 1, defenseModifier: 0, incomeModifier: 0, isPassable: true, isCityBuildable: true)]
+        let cityLevels = [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 4, buildingSlots: 1, upgradeCost: 0)]
+        let world = WorldState(
+            players: players,
+            hexes: [Hex(id: "home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")],
+            cities: [City(id: "capital", ownerID: "crown", hexID: "home", levelID: "village", isCapital: true)],
+            phase: .economy
+        )
+
+        var economy = try EconomyRules.resolve(
+            for: "crown",
+            in: world,
+            economy: EconomyState(players: players, startingGold: 50),
+            terrain: terrain,
+            cityLevels: cityLevels,
+            units: [],
+            buildings: []
+        ).get().economy
+        economy.spend(10, for: "crown", kind: .construction, source: "building:capital:market")
+
+        #expect(economy.journal.count == 2)
+        #expect(Set(economy.journal.map(\.id)).count == 2)
     }
 
     private let players = [WorldPlayer(id: "crown", displayName: "Crown"), WorldPlayer(id: "union", displayName: "Union")]

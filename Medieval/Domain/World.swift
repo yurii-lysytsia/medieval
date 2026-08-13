@@ -295,4 +295,14 @@ public struct WorldState: Codable, Equatable, Sendable {
     mutating func advanceFromEconomy() {
         phase = .construction
     }
+
+    mutating func addBuilding(_ building: Building) {
+        buildings.append(building)
+    }
+
+    mutating func setCityLevel(_ levelID: CityLevelID, for cityID: CityID) {
+        guard let index = cities.firstIndex(where: { $0.id == cityID }) else { return }
+        let city = cities[index]
+        cities[index] = City(id: city.id, ownerID: city.ownerID, hexID: city.hexID, levelID: levelID, isCapital: city.isCapital)
+    }
 }
