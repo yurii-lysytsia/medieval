@@ -113,16 +113,13 @@ public enum BasicAIPlanner {
         return []
     }
 
-    /// Spending decisions arrive with MED-54. Until then the opponent leaves the
-    /// phase rather than blocking it — an opponent that cannot finish a phase
-    /// stops the match for everyone.
     private static func constructionSteps(
-        for _: WorldPlayerID,
-        world _: WorldState,
-        economy _: EconomyState,
-        content _: GameContentConfiguration
+        for playerID: WorldPlayerID,
+        world: WorldState,
+        economy: EconomyState,
+        content: GameContentConfiguration
     ) -> [AIStep] {
-        []
+        AIEconomyDecisions.steps(for: playerID, world: world, economy: economy, content: content)
     }
 
     /// Marching and attacking arrive with MED-55.
