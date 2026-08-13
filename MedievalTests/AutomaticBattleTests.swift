@@ -1,3 +1,4 @@
+import Foundation
 @testable import MedievalDomain
 import Testing
 
@@ -33,11 +34,19 @@ struct AutomaticBattleTests {
         #expect(result.rounds.first?.attackerDamage ?? 99 < 4)
     }
 
+    @Test func battleReportPersistsInsideGameJournal() throws {
+        let report = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 10)], definitions: definitions, seed: 42).get()
+        var game = GameState(players: [Player(displayName: "One"), Player(displayName: "Two")], seed: 42, phase: .combat)
+        game.record(.battleResolved(report))
+        let restored = try JSONDecoder().decode(GameState.self, from: JSONEncoder().encode(game))
+        #expect(restored.journal.last?.event == .battleResolved(report))
+    }
+
     private let definitions = [
         UnitDefinition(id: "infantry", displayName: "Infantry", recruitmentCost: 20, upkeep: 2, hitPoints: 10, damage: 4, attackRange: 1, movement: 2, domain: .land),
         UnitDefinition(id: "archers", displayName: "Archers", recruitmentCost: 25, upkeep: 2, hitPoints: 7, damage: 3, attackRange: 3, movement: 2, domain: .land),
     ]
-    private func unit(_ id: UnitID, hp: Int, type: UnitTypeID = "infantry") -> Unit {
-        Unit(id: id, ownerID: id.rawValue.hasPrefix("a") ? "one" : "two", typeID: type, currentHitPoints: hp, location: .hex("h"))
+    private func unit(_ id: UnitID, hp: Int, type: UnitTypeID = "infantry") -> MedievalDomain.Unit {
+        MedievalDomain.Unit(id: id, ownerID: id.rawValue.hasPrefix("a") ? "one" : "two", typeID: type, currentHitPoints: hp, location: .hex("h"))
     }
 }

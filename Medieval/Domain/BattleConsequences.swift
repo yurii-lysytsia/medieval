@@ -29,7 +29,7 @@ public enum BattleConsequences {
             nextWorld.removeUnits(Set(report.defenderLosses))
             nextWorld.removeArmy(defender.id)
             update(report.attackerSurvivors, army: attacker, at: encounter.destination, in: &nextWorld)
-            if let capital = nextWorld.cities.first(where: { $0.hexID == encounter.destination && $0.isCapital && $0.ownerID == defender.ownerID }) {
+            if nextWorld.cities.contains(where: { $0.hexID == encounter.destination && $0.isCapital && $0.ownerID == defender.ownerID }) {
                 nextWorld.removeCapital(for: defender.ownerID)
                 let victory = VictoryRules.resolveCapitalLoss(of: defender.ownerID, game: game, world: nextWorld)
                 guard case let .success(resolution) = victory else {

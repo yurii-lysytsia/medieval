@@ -57,7 +57,27 @@ struct GameScreen: View {
                 .accessibilityLabel("Ігрове поле")
 
                 Divider()
-                mapInspector
+
+                HStack(spacing: 0) {
+                    GameView(
+                        state: coordinator.game.state,
+                        map: coordinator.game.content.scenario.map,
+                        world: coordinator.game.world,
+                        selectedHexID: coordinator.game.selectedHexID,
+                        reachableHexIDs: Set(coordinator.game.movementPreview.map { Array($0.routes.keys) } ?? []),
+                        encounterHexIDs: coordinator.game.movementPreview?.encounterHexIDs ?? [],
+                        previewRoute: coordinator.game.previewRoute,
+                        cameraResetToken: coordinator.game.cameraResetToken,
+                        onSelectHex: coordinator.game.selectHex
+                    )
+                    .accessibilityLabel("Ігрове поле")
+
+                    Divider()
+                    mapInspector
+                }
+            }
+            if let report = coordinator.game.battleReport {
+                battleReport(report)
             }
         }
     }
@@ -129,5 +149,32 @@ struct GameScreen: View {
         }
         .frame(width: 230)
         .padding()
+    }
+
+    private func battleReport(_ report: BattleResult) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Звіт автоматичного бою").font(.title2.bold())
+            Text("Раундів: \(report.rounds.count)")
+            Text("Сили: \(report.attackerInitial.count) проти \(report.defenderInitial.count)")
+            Text("Втрати: \(report.attackerLosses.count) / \(report.defenderLosses.count)")
+            ForEach(Array(report.context.defenderModifiers.enumerated()), id: \.offset) { _, modifier in
+                Text("\(modifier.name): +\(modifier.percent)% оборони")
+            }
+            Text(reportOutcome(report.outcome)).font(.headline)
+            Button("Продовжити") { coordinator.game.dismissBattleReport() }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(24)
+        .frame(width: 390)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .shadow(radius: 20)
+    }
+
+    private func reportOutcome(_ outcome: BattleOutcome) -> String {
+        switch outcome {
+        case .victory(.attacker): "Переміг атакувальник"
+        case .victory(.defender): "Переміг захисник"
+        case .draw: "Обидві сторони знищено"
+        }
     }
 }
