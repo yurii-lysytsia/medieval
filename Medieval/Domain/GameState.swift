@@ -16,12 +16,14 @@ public struct GameState: Codable, Equatable, Sendable {
     public private(set) var players: [Player]
     public private(set) var activePlayerIndex: Int
     public private(set) var turn: Int
+    public private(set) var phase: GamePhase
 
     public init(
         players: [Player],
         seed: UInt64 = UInt64.random(in: .min ... .max),
         activePlayerIndex: Int = 0,
-        turn: Int = 1
+        turn: Int = 1,
+        phase: GamePhase = .economy
     ) {
         if let violation = Self.invariantViolation(
             players: players,
@@ -34,6 +36,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.players = players
         self.activePlayerIndex = activePlayerIndex
         self.turn = turn
+        self.phase = phase
     }
 
     /// Decoded state comes from files we do not control, so the invariants that
@@ -60,6 +63,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.players = players
         self.activePlayerIndex = activePlayerIndex
         self.turn = turn
+        phase = try container.decode(GamePhase.self, forKey: .phase)
     }
 
     public var activePlayer: Player {
@@ -71,6 +75,11 @@ public struct GameState: Codable, Equatable, Sendable {
         if activePlayerIndex == 0 {
             turn += 1
         }
+        phase = .economy
+    }
+
+    mutating func advancePhase(to phase: GamePhase) {
+        self.phase = phase
     }
 
     /// What every `GameState` must satisfy, shared by `init` and `init(from:)`.

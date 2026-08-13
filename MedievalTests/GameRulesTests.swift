@@ -6,9 +6,20 @@ struct GameRulesTests {
     private let crown = Player(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, displayName: "Crown")
     private let union = Player(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!, displayName: "Union")
 
-    @Test func reducerMovesToNextPlayerForValidAction() throws {
+    @Test func phasesAdvanceOnlyInTheirLegalOrder() throws {
         let initial = GameState(players: [crown, union], seed: 42)
+        let construction = try GameRules.apply(.advancePhase(playerID: crown.id), to: initial).get()
+        let movement = try GameRules.apply(.advancePhase(playerID: crown.id), to: construction).get()
+        let combat = try GameRules.apply(.advancePhase(playerID: crown.id), to: movement).get()
 
+        #expect(initial.phase == .economy)
+        #expect(construction.phase == .construction)
+        #expect(movement.phase == .movement)
+        #expect(combat.phase == .combat)
+    }
+
+    @Test func endingCombatMovesToNextPlayerAndResetsPhase() throws {
+        let initial = GameState(players: [crown, union], seed: 42, phase: .combat)
         let next = try GameRules.apply(.endTurn(playerID: crown.id), to: initial).get()
 
         #expect(next.turn == 1)
@@ -16,24 +27,41 @@ struct GameRulesTests {
     }
 
     @Test func fullRoundIncrementsTurn() throws {
-        let initial = GameState(players: [crown, union], seed: 42)
+        let initial = GameState(players: [crown, union], seed: 42, phase: .combat)
         let afterFirstTurn = try GameRules.apply(.endTurn(playerID: crown.id), to: initial).get()
-        let afterRound = try GameRules.apply(.endTurn(playerID: union.id), to: afterFirstTurn).get()
+        let unionCombat = GameState(players: afterFirstTurn.players, seed: afterFirstTurn.seed, activePlayerIndex: afterFirstTurn.activePlayerIndex, turn: afterFirstTurn.turn, phase: .combat)
+        let afterRound = try GameRules.apply(.endTurn(playerID: union.id), to: unionCombat).get()
 
         #expect(afterRound.turn == 2)
         #expect(afterRound.activePlayer == initial.activePlayer)
     }
 
-    @Test func invalidActionDoesNotChangeState() {
+    @Test func invalidPlayerOrPhaseDoesNotChangeState() {
         let initial = GameState(players: [crown, union], seed: 42)
 
-        let result = GameRules.apply(.endTurn(playerID: union.id), to: initial)
+        #expect(GameRules.apply(.advancePhase(playerID: union.id), to: initial) == .failure(.playerIsNotActive))
+        #expect(GameRules.apply(.endTurn(playerID: crown.id), to: initial) == .failure(.invalidPhase(.economy)))
+        #expect(GameRules.apply(.advancePhase(playerID: crown.id), to: GameState(players: [crown, union], phase: .combat)) == .failure(.invalidPhase(.combat)))
+    }
 
-        #expect(result == .failure(.playerIsNotActive))
+    @Test func optionalPhasesCanBeSkippedWithoutMutatingOtherState() throws {
+        let initial = GameState(players: [crown, union], seed: 42, phase: .construction)
+        let skipped = try GameRules.apply(.advancePhase(playerID: crown.id), to: initial).get()
+
+        #expect(skipped.phase == .movement)
+        #expect(skipped.activePlayer == crown)
+        #expect(skipped.turn == initial.turn)
     }
 
     @Test func stateAndReplayAreCodableAndDeterministic() throws {
-        let actions: [GameAction] = [.endTurn(playerID: crown.id), .endTurn(playerID: union.id)]
+        // A turn walks economy → construction → movement → combat before it can
+        // end, so a faithful replay has to carry the phase steps too.
+        let actions: [GameAction] = [
+            .advancePhase(playerID: crown.id),
+            .advancePhase(playerID: crown.id),
+            .advancePhase(playerID: crown.id),
+            .endTurn(playerID: crown.id),
+        ]
         let state = try actions.reduce(GameState(players: [crown, union], seed: 42)) { state, action in
             try GameRules.apply(action, to: state).get()
         }
@@ -61,7 +89,7 @@ struct GameRulesTests {
         let replay = GameReplay(
             seed: 42,
             players: [crown, union],
-            actions: [.endTurn(playerID: crown.id), .endTurn(playerID: UUID())]
+            actions: [.advancePhase(playerID: crown.id), .advancePhase(playerID: UUID())]
         )
 
         #expect(throws: GameRuleError.playerIsNotActive) {

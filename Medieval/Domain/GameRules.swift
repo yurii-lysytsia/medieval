@@ -1,16 +1,19 @@
 import Foundation
 
 public enum GameAction: Equatable, Sendable {
+    case advancePhase(playerID: UUID)
     case endTurn(playerID: UUID)
 }
 
 extension GameAction: Codable {
     private enum CodingKeys: String, CodingKey { case kind, playerID }
-    private enum Kind: String, Codable { case endTurn }
+    private enum Kind: String, Codable { case advancePhase, endTurn }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         switch try container.decode(Kind.self, forKey: .kind) {
+        case .advancePhase:
+            self = try .advancePhase(playerID: container.decode(UUID.self, forKey: .playerID))
         case .endTurn:
             self = try .endTurn(playerID: container.decode(UUID.self, forKey: .playerID))
         }
@@ -19,6 +22,9 @@ extension GameAction: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
+        case let .advancePhase(playerID):
+            try container.encode(Kind.advancePhase, forKey: .kind)
+            try container.encode(playerID, forKey: .playerID)
         case let .endTurn(playerID):
             try container.encode(Kind.endTurn, forKey: .kind)
             try container.encode(playerID, forKey: .playerID)
@@ -28,6 +34,7 @@ extension GameAction: Codable {
 
 public enum GameRuleError: Error, Equatable, Sendable {
     case playerIsNotActive
+    case invalidPhase(GamePhase)
 }
 
 public enum GameRules {
@@ -36,11 +43,25 @@ public enum GameRules {
         var next = state
 
         switch action {
+        case let .advancePhase(playerID):
+            guard playerID == state.activePlayer.id else { return .failure(.playerIsNotActive) }
+            guard let followingPhase = nextPhase(after: state.phase) else { return .failure(.invalidPhase(state.phase)) }
+            next.advancePhase(to: followingPhase)
         case let .endTurn(playerID):
             guard playerID == state.activePlayer.id else { return .failure(.playerIsNotActive) }
+            guard state.phase == .combat else { return .failure(.invalidPhase(state.phase)) }
             next.advanceTurn()
         }
 
         return .success(next)
+    }
+
+    private static func nextPhase(after phase: GamePhase) -> GamePhase? {
+        switch phase {
+        case .economy: .construction
+        case .construction: .movement
+        case .movement: .combat
+        default: nil
+        }
     }
 }
