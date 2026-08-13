@@ -6,6 +6,7 @@ final class GameScene: SKScene {
     private let titleLabel = SKLabelNode(fontNamed: "Palatino-Bold")
     private let turnLabel = SKLabelNode(fontNamed: "SF Pro Rounded")
     private let mapLayer = SKNode()
+    private let overlayLayer = SKNode()
     private let riverLayer = SKNode()
     private let routeLayer = SKNode()
     private let cityLayer = SKNode()
@@ -16,18 +17,23 @@ final class GameScene: SKScene {
     /// The vertical scroll delta that counts as one full zoom step. A mouse
     /// wheel tick already exceeds it; a trackpad reaches it over several events.
     private static let fullZoomStepDelta: CGFloat = 10
-    private static let minimumZoom: CGFloat = 0.65
+    private static let minimumZoom: CGFloat = 0.12
     private static let maximumZoom: CGFloat = 2.5
-    private let hexRadius: CGFloat = 46
+    private static let renderedTileSize = CGSize(width: 80, height: 90)
+    private static let horizontalStep: CGFloat = 73
+    private static let verticalStep: CGFloat = 60
+    private let hexRadius: CGFloat = 40
+    private let hexHalfWidth: CGFloat = 36.5
     private var hexCenters: [HexID: CGPoint] = [:]
+    private var terrainTextures: [TerrainID: SKTexture] = [:]
+    private var riverOverlayTexture: SKTexture?
+    private var renderedMapID: String?
+    private var mapMinimumProjectedX: CGFloat = 0
+    private var mapMaximumR = 0
     private var zoom: CGFloat = 1
     private var dragStart: CGPoint?
     private var isDragging = false
     private var lastCameraResetToken = -1
-    /// Hex positions are measured down from the top of the scene, so a resize
-    /// invalidates them. Kept so `didChangeSize` can redraw without waiting for
-    /// the next state change to arrive from SwiftUI.
-    private var lastDrawn: (map: StaticHexMap, world: WorldState, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>, previewRoute: MovementRoute?)?
 
     override func didMove(to _: SKView) {
         scaleMode = .resizeFill
@@ -47,6 +53,7 @@ final class GameScene: SKScene {
 
         addChild(mapContainer)
         mapContainer.addChild(mapLayer)
+        mapContainer.addChild(overlayLayer)
         mapContainer.addChild(riverLayer)
         mapContainer.addChild(routeLayer)
         mapContainer.addChild(cityLayer)
@@ -56,16 +63,7 @@ final class GameScene: SKScene {
     override func didChangeSize(_: CGSize) {
         titleLabel.position = CGPoint(x: size.width / 2, y: size.height - 42)
         turnLabel.position = CGPoint(x: size.width / 2, y: size.height - 70)
-        if let last = lastDrawn {
-            drawMap(
-                last.map,
-                world: last.world,
-                selectedHexID: last.selectedHexID,
-                reachableHexIDs: last.reachableHexIDs,
-                encounterHexIDs: last.encounterHexIDs,
-                previewRoute: last.previewRoute
-            )
-        }
+        clampMapPosition()
     }
 
     func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>, previewRoute: MovementRoute?, cameraResetToken: Int) {
@@ -86,11 +84,8 @@ final class GameScene: SKScene {
             isDragging = false
             return
         }
-        let point = event.location(in: self)
-        guard let node = nodes(at: point).first(where: { $0.name?.hasPrefix("hex:") == true }),
-              let rawID = node.name?.dropFirst(4)
-        else { return }
-        onSelectHex?(HexID(rawValue: String(rawID)))
+        guard let id = hexID(at: event.location(in: self)) else { return }
+        onSelectHex?(id)
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -108,20 +103,27 @@ final class GameScene: SKScene {
         clampMapPosition()
     }
 
-    override func scrollWheel(with event: NSEvent) {
-        // A horizontal scroll reports a vertical delta of zero. Without this
-        // guard it fell through to the "scrolled down" branch, so swiping
-        // sideways on a trackpad zoomed the map out.
-        guard event.scrollingDeltaY != 0 else { return }
+    func handleScrollWheel(with event: NSEvent) {
+        // Two-finger trackpad scrolling pans in both axes. Holding Command
+        // turns it into zoom, matching the familiar map/canvas convention.
+        if event.hasPreciseScrollingDeltas,
+           !event.modifierFlags.contains(.command)
+        {
+            mapContainer.position = CGPoint(
+                x: mapContainer.position.x + event.scrollingDeltaX,
+                y: mapContainer.position.y + event.scrollingDeltaY
+            )
+            clampMapPosition()
+            return
+        }
 
-        // A trackpad emits a stream of small precise deltas where a mouse emits
-        // one coarse tick, so a fixed step per event made the trackpad lurch.
+        guard event.scrollingDeltaY != 0 else { return }
         let step = min(abs(event.scrollingDeltaY), Self.fullZoomStepDelta) / Self.fullZoomStepDelta
         let factor = 1 + step * (event.scrollingDeltaY > 0 ? 0.12 : -0.11)
         setZoom(zoom * factor, anchoredAt: event.location(in: self))
     }
 
-    override func magnify(with event: NSEvent) {
+    func handleMagnify(with event: NSEvent) {
         setZoom(zoom * (1 + event.magnification), anchoredAt: event.location(in: self))
     }
 
@@ -133,42 +135,28 @@ final class GameScene: SKScene {
         encounterHexIDs: Set<HexID>,
         previewRoute: MovementRoute?
     ) {
-        lastDrawn = (map, world, selectedHexID, reachableHexIDs, encounterHexIDs, previewRoute)
-        [mapLayer, riverLayer, routeLayer, cityLayer, armyLayer].forEach { $0.removeAllChildren() }
-        hexCenters = [:]
+        rebuildMapIfNeeded(map)
+        [overlayLayer, riverLayer, routeLayer, cityLayer, armyLayer].forEach { $0.removeAllChildren() }
 
-        for hex in map.hexes {
-            let center = point(for: hex.coordinate, bounds: map.bounds)
-            hexCenters[hex.id] = center
-            let node = SKShapeNode(path: hexPath(center: center))
-            node.name = "hex:\(hex.id.rawValue)"
-            node.fillColor = terrainColor(hex.terrainID)
-            node.strokeColor = strokeColor(for: hex.id, selectedHexID: selectedHexID, reachableHexIDs: reachableHexIDs, encounterHexIDs: encounterHexIDs)
-            node.lineWidth = hex.id == selectedHexID || reachableHexIDs.contains(hex.id) ? Self.selectionLineWidth : Self.gridLineWidth
-            mapLayer.addChild(node)
+        for id in reachableHexIDs {
+            guard let center = hexCenters[id] else { continue }
+            overlayLayer.addChild(highlight(at: center, color: .init(red: 0.28, green: 0.92, blue: 0.52, alpha: 0.28)))
+        }
+        for id in encounterHexIDs {
+            guard let center = hexCenters[id] else { continue }
+            overlayLayer.addChild(highlight(at: center, color: .init(red: 0.95, green: 0.20, blue: 0.17, alpha: 0.38)))
         }
 
         if let selectedHexID, let center = hexCenters[selectedHexID] {
-            mapLayer.addChild(selectionHighlight(at: center))
+            overlayLayer.addChild(selectionHighlight(at: center))
         }
 
         for river in world.riverBoundaries {
             guard let firstCenter = hexCenters[river.boundary.firstHexID],
-                  let secondCenter = hexCenters[river.boundary.secondHexID],
-                  let path = riverPath(between: firstCenter, and: secondCenter)
+                  let secondCenter = hexCenters[river.boundary.secondHexID]
             else { continue }
 
-            let border = SKShapeNode(path: path)
-            border.name = "river:border"
-            border.strokeColor = .init(red: 0.03, green: 0.12, blue: 0.17, alpha: 0.95)
-            border.lineCap = .round
-            riverLayer.addChild(border)
-
-            let water = SKShapeNode(path: path)
-            water.name = "river:water"
-            water.strokeColor = .init(red: 0.40, green: 0.84, blue: 0.94, alpha: 1)
-            water.lineCap = .round
-            riverLayer.addChild(water)
+            riverLayer.addChild(riverNode(from: firstCenter, to: secondCenter))
         }
         updateRiverLineWidths()
 
@@ -215,7 +203,7 @@ final class GameScene: SKScene {
         }
         for (hexID, units) in visibleUnits {
             guard let hexID, let center = hexCenters[hexID] else { continue }
-            let label = SKLabelNode(fontNamed: "SFProRounded-Bold")
+            let label = SKLabelNode(fontNamed: "SF Pro Rounded-Bold")
             label.text = units.contains(where: { $0.typeID == "ship" }) ? "⚓︎\(units.count)" : "⚔︎\(units.count)"
             label.fontSize = 16
             label.fontColor = .white
@@ -225,8 +213,74 @@ final class GameScene: SKScene {
         }
     }
 
+    private func rebuildMapIfNeeded(_ map: StaticHexMap) {
+        guard renderedMapID != map.id || hexCenters.count != map.hexes.count else { return }
+
+        renderedMapID = map.id
+        mapLayer.removeAllChildren()
+        hexCenters = [:]
+        terrainTextures = [:]
+        mapMinimumProjectedX = map.hexes
+            .map { CGFloat($0.coordinate.q) + CGFloat($0.coordinate.r) / 2 }
+            .min() ?? 0
+        mapMaximumR = map.hexes.map(\.coordinate.r).max() ?? 0
+
+        for hex in map.hexes {
+            let center = point(for: hex.coordinate)
+            hexCenters[hex.id] = center
+            if let texture = terrainTexture(for: hex.terrainID) {
+                let node = SKSpriteNode(
+                    texture: texture,
+                    size: Self.renderedTileSize
+                )
+                node.name = "hex:\(hex.id.rawValue)"
+                node.position = center
+                mapLayer.addChild(node)
+            } else {
+                let node = SKShapeNode(path: hexPath(center: center))
+                node.name = "hex:\(hex.id.rawValue)"
+                node.fillColor = terrainColor(hex.terrainID)
+                node.strokeColor = .init(white: 0.15, alpha: 0.9)
+                node.lineWidth = Self.gridLineWidth
+                mapLayer.addChild(node)
+            }
+        }
+    }
+
+    private func terrainTexture(for terrainID: TerrainID) -> SKTexture? {
+        if let cached = terrainTextures[terrainID] { return cached }
+        let name = "hex-terrain-\(terrainID.rawValue)"
+        guard Bundle.main.url(forResource: name, withExtension: "png") != nil else { return nil }
+        let texture = SKTexture(imageNamed: name)
+        texture.filteringMode = .linear
+        terrainTextures[terrainID] = texture
+        return texture
+    }
+
+    private func hexID(at scenePoint: CGPoint) -> HexID? {
+        let mapPoint = mapContainer.convert(scenePoint, from: self)
+        let closest = hexCenters.min { first, second in
+            squaredDistance(from: first.value, to: mapPoint) < squaredDistance(from: second.value, to: mapPoint)
+        }
+        guard let closest, hexPath(center: closest.value).contains(mapPoint) else { return nil }
+        return closest.key
+    }
+
+    private func squaredDistance(from first: CGPoint, to second: CGPoint) -> CGFloat {
+        let x = first.x - second.x
+        let y = first.y - second.y
+        return x * x + y * y
+    }
+
     private func resetCamera() {
-        zoom = 1
+        let frame = mapLayer.calculateAccumulatedFrame().insetBy(dx: -12, dy: -12)
+        let availableWidth = max(size.width - 40, 1)
+        let availableHeight = max(size.height - 130, 1)
+        let fittedZoom = min(
+            min(availableWidth / max(frame.width, 1), availableHeight / max(frame.height, 1)),
+            1
+        )
+        zoom = min(max(fittedZoom, Self.minimumZoom), Self.maximumZoom)
         mapContainer.setScale(zoom)
         updateRiverLineWidths()
         mapContainer.position = .zero
@@ -277,19 +331,13 @@ final class GameScene: SKScene {
         mapContainer.position = CGPoint(x: horizontal, y: vertical)
     }
 
-    private func point(for coordinate: HexCoordinate, bounds: HexMapBounds) -> CGPoint {
-        let q = CGFloat(coordinate.q - bounds.minimumQ)
-        let r = CGFloat(coordinate.r - bounds.minimumR)
-        let x = 110 + hexRadius * sqrt(3) * (q + r / 2)
-        let y = size.height - 155 - hexRadius * 1.5 * r
+    private func point(for coordinate: HexCoordinate) -> CGPoint {
+        let projectedX = CGFloat(coordinate.q) + CGFloat(coordinate.r) / 2
+        let x = Self.renderedTileSize.width / 2
+            + Self.horizontalStep * (projectedX - mapMinimumProjectedX)
+        let y = Self.renderedTileSize.height / 2
+            + Self.verticalStep * CGFloat(mapMaximumR - coordinate.r)
         return CGPoint(x: x, y: y)
-    }
-
-    private func strokeColor(for id: HexID, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>) -> SKColor {
-        if id == selectedHexID { return .white }
-        if encounterHexIDs.contains(id) { return .init(red: 0.96, green: 0.24, blue: 0.20, alpha: 1) }
-        if reachableHexIDs.contains(id) { return .init(red: 0.30, green: 0.86, blue: 0.95, alpha: 1) }
-        return .init(white: 0.15, alpha: 0.9)
     }
 
     /// The selection outline drawn wholly inside its hex.
@@ -300,10 +348,7 @@ final class GameScene: SKScene {
     /// had a later neighbour. Insetting the path by half the line width keeps
     /// the outline on the selected hex's own ground.
     private func selectionHighlight(at center: CGPoint) -> SKShapeNode {
-        // A hexagon's edges sit at `radius * cos(30°)` from the centre, so
-        // moving them inwards by `d` costs `d / cos(30°)` of radius.
-        let inset = Self.selectionLineWidth / 2 / cos(.pi / 6)
-        let node = SKShapeNode(path: hexPath(center: center, radius: hexRadius - inset))
+        let node = SKShapeNode(path: hexPath(center: center, scale: 0.91))
         node.strokeColor = .white
         node.lineWidth = Self.selectionLineWidth
         node.fillColor = .clear
@@ -311,12 +356,26 @@ final class GameScene: SKScene {
         return node
     }
 
-    private func hexPath(center: CGPoint, radius: CGFloat? = nil) -> CGPath {
-        let radius = radius ?? hexRadius
+    private func highlight(at center: CGPoint, color: SKColor) -> SKShapeNode {
+        let node = SKShapeNode(path: hexPath(center: center, scale: 0.91))
+        node.fillColor = color
+        node.strokeColor = .clear
+        node.zPosition = 1
+        return node
+    }
+
+    private func hexPath(center: CGPoint, scale: CGFloat = 1) -> CGPath {
         let path = CGMutablePath()
-        for index in 0 ..< 6 {
-            let angle = CGFloat.pi / 180 * (60 * CGFloat(index) - 30)
-            let point = CGPoint(x: center.x + radius * cos(angle), y: center.y + radius * sin(angle))
+        let vertices = [
+            CGPoint(x: 0, y: hexRadius),
+            CGPoint(x: hexHalfWidth, y: hexRadius / 2),
+            CGPoint(x: hexHalfWidth, y: -hexRadius / 2),
+            CGPoint(x: 0, y: -hexRadius),
+            CGPoint(x: -hexHalfWidth, y: -hexRadius / 2),
+            CGPoint(x: -hexHalfWidth, y: hexRadius / 2),
+        ]
+        for (index, vertex) in vertices.enumerated() {
+            let point = CGPoint(x: center.x + vertex.x * scale, y: center.y + vertex.y * scale)
             if index == 0 { path.move(to: point) } else { path.addLine(to: point) }
         }
         path.closeSubpath()
@@ -334,6 +393,40 @@ final class GameScene: SKScene {
         path.move(to: CGPoint(x: midpoint.x - halfEdge.x, y: midpoint.y - halfEdge.y))
         path.addLine(to: CGPoint(x: midpoint.x + halfEdge.x, y: midpoint.y + halfEdge.y))
         return path
+    }
+
+    private func riverNode(from first: CGPoint, to second: CGPoint) -> SKNode {
+        if riverOverlayTexture == nil,
+           Bundle.main.url(forResource: "hex-river-edge-ne", withExtension: "png") != nil
+        {
+            let texture = SKTexture(imageNamed: "hex-river-edge-ne")
+            texture.filteringMode = .linear
+            riverOverlayTexture = texture
+        }
+        if let riverOverlayTexture {
+            let node = SKSpriteNode(texture: riverOverlayTexture, size: Self.renderedTileSize)
+            let direction = atan2(second.y - first.y, second.x - first.x)
+            let sixtyDegrees = CGFloat.pi / 3
+            node.zRotation = round((direction - sixtyDegrees) / sixtyDegrees) * sixtyDegrees
+            node.name = "river:overlay"
+            node.position = first
+            node.zPosition = 2
+            return node
+        }
+
+        let container = SKNode()
+        guard let path = riverPath(between: first, and: second) else { return container }
+        let border = SKShapeNode(path: path)
+        border.name = "river:border"
+        border.strokeColor = .init(red: 0.03, green: 0.12, blue: 0.17, alpha: 0.95)
+        border.lineCap = .round
+        container.addChild(border)
+        let water = SKShapeNode(path: path)
+        water.name = "river:water"
+        water.strokeColor = .init(red: 0.40, green: 0.84, blue: 0.94, alpha: 1)
+        water.lineCap = .round
+        container.addChild(water)
+        return container
     }
 
     private func updateRiverLineWidths() {

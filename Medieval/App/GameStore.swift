@@ -367,7 +367,10 @@ final class GameStore: ObservableObject {
 
     private static func loadBundledContent() -> GameContentConfiguration {
         do {
-            return try GameContentLoader.loadMVP()
+            // The Europe campaign is the map the game ships with. It is built
+            // on top of the MVP catalogue, so terrain, units, city levels and
+            // buildings all still come from the bundled content file.
+            return try GameContentLoader.loadEuropeMap()
         } catch {
             fatalError(error.localizedDescription)
         }

@@ -137,6 +137,7 @@
       "displayName": "Village",
       "baseIncome": 4,
       "buildingSlots": 1,
+      "recruitmentLimit": 1,
       "upgradeCost": 0,
       "requiredBuildingIDs": [],
       "recruitmentLimit": 1
@@ -146,6 +147,7 @@
       "displayName": "Town",
       "baseIncome": 8,
       "buildingSlots": 4,
+      "recruitmentLimit": 2,
       "upgradeCost": 100,
       "requiredBuildingIDs": [
         "town-hall"
@@ -157,6 +159,7 @@
       "displayName": "City",
       "baseIncome": 14,
       "buildingSlots": 4,
+      "recruitmentLimit": 3,
       "upgradeCost": 220,
       "requiredBuildingIDs": [
         "town-hall",
