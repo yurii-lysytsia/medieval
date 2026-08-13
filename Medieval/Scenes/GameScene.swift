@@ -9,6 +9,8 @@ final class GameScene: SKScene {
     private let mapLayer = SKNode()
     private let cityLayer = SKNode()
     private let armyLayer = SKNode()
+    private static let gridLineWidth: CGFloat = 2
+    private static let selectionLineWidth: CGFloat = 5
     private let hexRadius: CGFloat = 46
     private var hexCenters: [HexID: CGPoint] = [:]
     /// Hex positions are measured down from the top of the scene, so a resize
@@ -70,9 +72,13 @@ final class GameScene: SKScene {
             let node = SKShapeNode(path: hexPath(center: center))
             node.name = "hex:\(hex.id.rawValue)"
             node.fillColor = terrainColor(hex.terrainID)
-            node.strokeColor = hex.id == selectedHexID ? .white : .init(white: 0.15, alpha: 0.9)
-            node.lineWidth = hex.id == selectedHexID ? 5 : 2
+            node.strokeColor = .init(white: 0.15, alpha: 0.9)
+            node.lineWidth = Self.gridLineWidth
             mapLayer.addChild(node)
+        }
+
+        if let selectedHexID, let center = hexCenters[selectedHexID] {
+            mapLayer.addChild(selectionHighlight(at: center))
         }
 
         for city in world.cities {
@@ -104,11 +110,31 @@ final class GameScene: SKScene {
         return CGPoint(x: x, y: y)
     }
 
-    private func hexPath(center: CGPoint) -> CGPath {
+    /// The selection outline drawn wholly inside its hex.
+    ///
+    /// SpriteKit centres a stroke on its path, so half of it would sit in the
+    /// neighbouring hexes — and those are drawn afterwards, so their fill
+    /// painted over it and the highlight came out clipped on every side that
+    /// had a later neighbour. Insetting the path by half the line width keeps
+    /// the outline on the selected hex's own ground.
+    private func selectionHighlight(at center: CGPoint) -> SKShapeNode {
+        // A hexagon's edges sit at `radius * cos(30°)` from the centre, so
+        // moving them inwards by `d` costs `d / cos(30°)` of radius.
+        let inset = Self.selectionLineWidth / 2 / cos(.pi / 6)
+        let node = SKShapeNode(path: hexPath(center: center, radius: hexRadius - inset))
+        node.strokeColor = .white
+        node.lineWidth = Self.selectionLineWidth
+        node.fillColor = .clear
+        node.zPosition = 1
+        return node
+    }
+
+    private func hexPath(center: CGPoint, radius: CGFloat? = nil) -> CGPath {
+        let radius = radius ?? hexRadius
         let path = CGMutablePath()
         for index in 0 ..< 6 {
             let angle = CGFloat.pi / 180 * (60 * CGFloat(index) - 30)
-            let point = CGPoint(x: center.x + hexRadius * cos(angle), y: center.y + hexRadius * sin(angle))
+            let point = CGPoint(x: center.x + radius * cos(angle), y: center.y + radius * sin(angle))
             if index == 0 { path.move(to: point) } else { path.addLine(to: point) }
         }
         path.closeSubpath()
