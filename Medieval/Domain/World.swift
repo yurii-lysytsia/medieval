@@ -410,4 +410,17 @@ public struct WorldState: Codable, Equatable, Sendable {
     mutating func markFinished() {
         phase = .finished
     }
+
+    mutating func setPhase(_ phase: GamePhase) {
+        self.phase = phase
+    }
+
+    mutating func markArmyCommanded(_ armyID: ArmyID) {
+        guard let army = armies.first(where: { $0.id == armyID }) else { return }
+        replaceArmy(Army(id: army.id, ownerID: army.ownerID, hexID: army.hexID, unitIDs: army.unitIDs, hasMoved: true, embarkedOnShipID: army.embarkedOnShipID))
+        for id in army.unitIDs {
+            guard let unit = units.first(where: { $0.id == id }) else { continue }
+            replaceUnit(Unit(id: unit.id, ownerID: unit.ownerID, typeID: unit.typeID, currentHitPoints: unit.currentHitPoints, condition: .moved, location: unit.location))
+        }
+    }
 }

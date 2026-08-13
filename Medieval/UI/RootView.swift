@@ -63,7 +63,7 @@ struct GameScreen: View {
                 GameView(
                     state: game.state,
                     map: game.content.scenario.map,
-                    world: game.content.scenario.world,
+                    world: game.world,
                     selectedHexID: game.selectedHexID,
                     reachableHexIDs: Set(game.movementPreview.map { Array($0.routes.keys) } ?? []),
                     encounterHexIDs: game.movementPreview?.encounterHexIDs ?? [],
@@ -137,6 +137,14 @@ struct GameScreen: View {
                 Text("Координати: \(selected.coordinate.q), \(selected.coordinate.r)")
                 Text("Місцевість: \(selected.terrainID.rawValue)")
                 Text(game.content.isPassable(selected) ? "Прохідний" : "Непрохідний")
+                if let route = game.previewRoute {
+                    Text("Маршрут: \(route.cost) руху")
+                        .fontWeight(.semibold)
+                    Button(game.movementPreview?.encounterHexIDs.contains(selected.id) == true ? "Почати бій" : "Підтвердити рух") {
+                        game.confirmMovement()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             } else {
                 Text("Виберіть гекс на мапі.").foregroundStyle(.secondary)
             }
