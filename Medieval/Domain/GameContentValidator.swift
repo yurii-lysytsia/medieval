@@ -110,7 +110,9 @@ public enum GameContentValidator {
         let cityIDs = Set(world.cities.map(\.id))
         let map = configuration.scenario.map
         let mapHexIDs = Set(map.hexes.map(\.id))
-        let worldUnitByID = Dictionary(uniqueKeysWithValues: world.units.map { ($0.id, $0) })
+        // Same reasoning as the tables above: a duplicate unit id is something
+        // to report, not something to trap the loader on.
+        let worldUnitByID = Dictionary(world.units.map { ($0.id, $0) }) { first, _ in first }
 
         for level in configuration.cityLevels {
             for buildingID in level.requiredBuildingIDs {
