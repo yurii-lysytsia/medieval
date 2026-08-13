@@ -168,14 +168,15 @@ final class GameScene: SKScene {
         for army in world.armies {
             guard let center = hexCenters[army.hexID] else { continue }
             let label = SKLabelNode(fontNamed: "SFProRounded-Bold")
-            label.text = "⚔︎\(army.quantity)"
+            label.text = "⚔︎\(army.unitIDs.count)"
             label.fontSize = 16
             label.fontColor = .white
             label.verticalAlignmentMode = .center
             label.position = CGPoint(x: center.x, y: center.y - 23)
             armyLayer.addChild(label)
         }
-        let visibleUnits = Dictionary(grouping: world.units.filter { $0.condition != .destroyed }) { unit -> HexID? in
+        let armyUnitIDs = Set(world.armies.flatMap(\.unitIDs))
+        let visibleUnits = Dictionary(grouping: world.units.filter { $0.condition != .destroyed && !armyUnitIDs.contains($0.id) }) { unit -> HexID? in
             switch unit.location {
             case let .hex(hexID): hexID
             case let .garrison(cityID): world.cities.first(where: { $0.id == cityID })?.hexID
@@ -184,7 +185,7 @@ final class GameScene: SKScene {
         }
         for (hexID, units) in visibleUnits {
             guard let hexID, let center = hexCenters[hexID] else { continue }
-            let label = SKLabelNode(fontNamed: "SF Pro Rounded-Bold")
+            let label = SKLabelNode(fontNamed: "SFProRounded-Bold")
             label.text = units.contains(where: { $0.typeID == "ship" }) ? "⚓︎\(units.count)" : "⚔︎\(units.count)"
             label.fontSize = 16
             label.fontColor = .white

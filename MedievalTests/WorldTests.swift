@@ -16,7 +16,12 @@ struct WorldTests {
             riverBoundaries: [
                 RiverBoundary(id: "river-0", boundary: HexBoundary(firstHexID: "h-0-0", secondHexID: "h-1-0")),
             ],
-            armies: [Army(id: "army-1", ownerID: "crown", hexID: "h-0-0", unitTypeID: "spearmen", quantity: 3)],
+            units: [
+                Unit(id: "unit-1", ownerID: "crown", typeID: "spearmen", currentHitPoints: 10, location: .hex("h-0-0")),
+                Unit(id: "unit-2", ownerID: "crown", typeID: "spearmen", currentHitPoints: 10, location: .hex("h-0-0")),
+                Unit(id: "unit-3", ownerID: "crown", typeID: "spearmen", currentHitPoints: 10, location: .hex("h-0-0")),
+            ],
+            armies: [Army(id: "army-1", ownerID: "crown", hexID: "h-0-0", unitIDs: ["unit-1", "unit-2", "unit-3"])],
             cities: [City(id: "city-1", ownerID: "crown", hexID: "h-0-0", levelID: "town", isCapital: true)],
             buildings: [Building(id: "building-1", cityID: "city-1", typeID: "market")],
             phase: .playerTurn

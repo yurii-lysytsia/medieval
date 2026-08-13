@@ -71,6 +71,7 @@ public enum RecruitmentRules {
         guard let level = cityLevels.first(where: { $0.id == city.levelID }) else { return .failure(.unknownCityLevel(city.levelID)) }
         guard ledger.recruited(in: cityID) < level.recruitmentLimit else { return .failure(.recruitmentLimitReached(cityID, limit: level.recruitmentLimit)) }
 
+        var recruitmentHexID = city.hexID
         if definition.domain == .land {
             guard world.buildings.contains(where: { $0.cityID == cityID && $0.typeID == "barracks" }) else {
                 return .failure(.barracksRequired(cityID))
@@ -80,15 +81,16 @@ public enum RecruitmentRules {
         } else {
             let neighbors = map.neighborhoods.first(where: { $0.hexID == city.hexID })?.neighborHexIDs ?? []
             let waterIDs: Set<TerrainID> = ["shallows", "deep-water"]
-            guard world.hexes.contains(where: { neighbors.contains($0.id) && waterIDs.contains($0.terrainID) }) else {
+            guard let waterHex = world.hexes.first(where: { neighbors.contains($0.id) && waterIDs.contains($0.terrainID) }) else {
                 return .failure(.navalUnitRequiresPort(unitTypeID))
             }
+            recruitmentHexID = waterHex.id
         }
 
         guard economy.canAfford(definition.recruitmentCost, for: playerID) else { return .failure(.insufficientCoins(required: definition.recruitmentCost)) }
         var nextWorld = world
         let sequence = nextWorld.reserveUnitNumber()
-        let location: UnitLocation = definition.domain == .land ? .garrison(cityID) : .hex(city.hexID)
+        let location: UnitLocation = definition.domain == .land ? .garrison(cityID) : .hex(recruitmentHexID)
         let unit = Unit(
             id: UnitID(rawValue: "unit-\(playerID.rawValue)-\(sequence)"),
             ownerID: playerID,

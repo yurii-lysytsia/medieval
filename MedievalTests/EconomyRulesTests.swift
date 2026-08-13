@@ -7,7 +7,11 @@ struct EconomyRulesTests {
         let world = WorldState(
             players: players,
             hexes: [Hex(id: "home", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains")],
-            armies: [Army(id: "army", ownerID: "crown", hexID: "home", unitTypeID: "spearmen", quantity: 2)],
+            units: [
+                Unit(id: "spear-1", ownerID: "crown", typeID: "spearmen", currentHitPoints: 10, location: .hex("home")),
+                Unit(id: "spear-2", ownerID: "crown", typeID: "spearmen", currentHitPoints: 10, location: .hex("home")),
+            ],
+            armies: [Army(id: "army", ownerID: "crown", hexID: "home", unitIDs: ["spear-1", "spear-2"])],
             cities: [City(id: "capital", ownerID: "crown", hexID: "home", levelID: "town", isCapital: true)],
             buildings: [Building(id: "market", cityID: "capital", typeID: "market")],
             phase: .economy
@@ -25,7 +29,8 @@ struct EconomyRulesTests {
         ).get()
 
         #expect(resolution.economy.coins(for: "crown") == 20)
-        #expect(resolution.entries.map(\.amount) == [10, 3, -1, -2])
+        // Upkeep is charged per unit now, not per stack.
+        #expect(resolution.entries.map(\.amount) == [10, 3, -1, -1, -1])
         #expect(resolution.economy.journal == resolution.entries)
         #expect(resolution.world.phase == .construction)
     }
