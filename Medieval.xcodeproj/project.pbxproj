@@ -6,13 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXFileReference section */
-		5BE01A22302CCE00006D078F /* Medieval.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Medieval.app; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
-
 /* Begin PBXBuildFile section */
 		5BE01A40302CCE00006D078F /* MedievalDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 5BE01A41302CCE00006D078F /* MedievalDomain */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5BE01A22302CCE00006D078F /* Medieval.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Medieval.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5BE01A24302CCE00006D078F /* Medieval */ = {
@@ -265,8 +265,11 @@
 				DEVELOPMENT_TEAM = XAU3F58R7T;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = "Medieval/Domain/* Medieval/Domain/Resources/*";
 				ENABLE_USER_SELECTED_FILES = readonly;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					"Medieval/Domain/*",
+					"Medieval/Domain/Resources/*",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -299,8 +302,11 @@
 				DEVELOPMENT_TEAM = XAU3F58R7T;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				EXCLUDED_SOURCE_FILE_NAMES = "Medieval/Domain/* Medieval/Domain/Resources/*";
 				ENABLE_USER_SELECTED_FILES = readonly;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					"Medieval/Domain/*",
+					"Medieval/Domain/Resources/*",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
