@@ -31,6 +31,30 @@ public struct BattleRound: Codable, Equatable, Sendable {
     public let destroyedUnitIDs: [UnitID]
 }
 
+public struct BattleModifier: Codable, Equatable, Sendable {
+    public let name: String
+    public let percent: Int
+
+    public init(name: String, percent: Int) {
+        self.name = name
+        self.percent = percent
+    }
+}
+
+public struct BattleContext: Codable, Equatable, Sendable {
+    public let attackerRollBonus: Int
+    public let defenderRollBonus: Int
+    public let defenderModifiers: [BattleModifier]
+
+    public init(attackerRollBonus: Int = 0, defenderRollBonus: Int = 0, defenderModifiers: [BattleModifier] = []) {
+        self.attackerRollBonus = attackerRollBonus
+        self.defenderRollBonus = defenderRollBonus
+        self.defenderModifiers = defenderModifiers
+    }
+
+    public var defenderDamageReduction: Int { min(90, max(-90, defenderModifiers.reduce(0) { $0 + $1.percent })) }
+}
+
 public struct BattleResult: Codable, Equatable, Sendable {
     public let outcome: BattleOutcome
     public let rounds: [BattleRound]
@@ -38,6 +62,7 @@ public struct BattleResult: Codable, Equatable, Sendable {
     public let defenderInitial: [BattleUnitState]
     public let attackerSurvivors: [BattleUnitState]
     public let defenderSurvivors: [BattleUnitState]
+    public let context: BattleContext
 
     public var attackerLosses: [UnitID] { attackerInitial.map(\.id).filter { id in !attackerSurvivors.contains(where: { $0.id == id }) } }
     public var defenderLosses: [UnitID] { defenderInitial.map(\.id).filter { id in !defenderSurvivors.contains(where: { $0.id == id }) } }
@@ -53,7 +78,8 @@ public enum AutomaticBattle {
         attackers: [Unit],
         defenders: [Unit],
         definitions: [UnitDefinition],
-        seed: UInt64
+        seed: UInt64,
+        context: BattleContext = BattleContext()
     ) -> Result<BattleResult, AutomaticBattleError> {
         guard !attackers.isEmpty else { return .failure(.emptyArmy(.attacker)) }
         guard !defenders.isEmpty else { return .failure(.emptyArmy(.defender)) }
@@ -69,15 +95,18 @@ public enum AutomaticBattle {
         var rounds: [BattleRound] = []
 
         for number in 1 ... 100 where !living(attackerHP).isEmpty && !living(defenderHP).isEmpty {
-            let attackerRoll = Int(generator.next() % 10)
-            let defenderRoll = Int(generator.next() % 10)
+            let attackerRoll = Int(generator.next() % 10) + context.attackerRollBonus
+            let defenderRoll = Int(generator.next() % 10) + context.defenderRollBonus
+            let rollModifier = min(45, max(-45, (attackerRoll - defenderRoll) * 5))
             var attackerDamage = 0
             var defenderDamage = 0
             var destroyed: [UnitID] = []
 
             for ranged in [true, false] {
-                let attackerStage = damage(from: attackers, hp: attackerHP, definitions: definitionByID, ranged: ranged)
-                let defenderStage = damage(from: defenders, hp: defenderHP, definitions: definitionByID, ranged: ranged)
+                let attackerBase = damage(from: attackers, hp: attackerHP, definitions: definitionByID, ranged: ranged)
+                let defenderBase = damage(from: defenders, hp: defenderHP, definitions: definitionByID, ranged: ranged)
+                let attackerStage = adjusted(attackerBase, percent: rollModifier - context.defenderDamageReduction)
+                let defenderStage = adjusted(defenderBase, percent: -rollModifier)
                 attackerDamage += attackerStage
                 defenderDamage += defenderStage
                 destroyed += apply(attackerStage, to: &defenderHP)
@@ -97,7 +126,7 @@ public enum AutomaticBattle {
         } else {
             .draw
         }
-        return .success(BattleResult(outcome: outcome, rounds: rounds, attackerInitial: attackerInitial, defenderInitial: defenderInitial, attackerSurvivors: attackerSurvivors, defenderSurvivors: defenderSurvivors))
+        return .success(BattleResult(outcome: outcome, rounds: rounds, attackerInitial: attackerInitial, defenderInitial: defenderInitial, attackerSurvivors: attackerSurvivors, defenderSurvivors: defenderSurvivors, context: context))
     }
 
     private static func damage(from units: [Unit], hp: [UnitID: Int], definitions: [UnitTypeID: UnitDefinition], ranged: Bool) -> Int {
@@ -122,6 +151,10 @@ public enum AutomaticBattle {
     }
 
     private static func living(_ hp: [UnitID: Int]) -> [UnitID] { hp.filter { $0.value > 0 }.map(\.key) }
+    private static func adjusted(_ damage: Int, percent: Int) -> Int {
+        max(0, Int((Double(damage) * Double(100 + percent) / 100).rounded()))
+    }
+
     private static func survivors(_ initial: [BattleUnitState], hp: [UnitID: Int]) -> [BattleUnitState] {
         initial.compactMap { unit in
             guard let value = hp[unit.id], value > 0 else { return nil }

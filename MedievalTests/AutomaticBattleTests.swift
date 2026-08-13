@@ -19,10 +19,18 @@ struct AutomaticBattleTests {
     }
 
     @Test func archersDealDamageBeforeMeleeUnits() throws {
-        let result = try AutomaticBattle.resolve(attackers: [unit("archer", hp: 7, type: "archers")], defenders: [unit("infantry", hp: 3)], definitions: definitions, seed: 1).get()
+        let result = try AutomaticBattle.resolve(attackers: [unit("archer", hp: 7, type: "archers")], defenders: [unit("infantry", hp: 1)], definitions: definitions, seed: 1).get()
         #expect(result.rounds.count == 1)
         #expect(result.outcome == .victory(.attacker))
         #expect(result.attackerSurvivors.first?.hitPoints == 7)
+    }
+
+    @Test func defenseModifierReducesDamageAndIsReported() throws {
+        let context = BattleContext(defenderModifiers: [BattleModifier(name: "Forest", percent: 50)])
+        let result = try AutomaticBattle.resolve(attackers: [unit("a", hp: 10)], defenders: [unit("d", hp: 20)], definitions: definitions, seed: 2, context: context).get()
+        #expect(result.context.defenderDamageReduction == 50)
+        #expect(result.context.defenderModifiers.first?.name == "Forest")
+        #expect(result.rounds.first?.attackerDamage ?? 99 < 4)
     }
 
     private let definitions = [
