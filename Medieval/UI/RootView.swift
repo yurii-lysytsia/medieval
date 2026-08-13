@@ -65,6 +65,9 @@ struct GameScreen: View {
                     map: game.content.scenario.map,
                     world: game.content.scenario.world,
                     selectedHexID: game.selectedHexID,
+                    reachableHexIDs: Set(game.movementPreview.map { Array($0.routes.keys) } ?? []),
+                    encounterHexIDs: game.movementPreview?.encounterHexIDs ?? [],
+                    previewRoute: game.previewRoute,
                     cameraResetToken: game.cameraResetToken,
                     onSelectHex: game.selectHex
                 )

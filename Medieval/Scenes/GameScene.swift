@@ -7,6 +7,7 @@ final class GameScene: SKScene {
     private let turnLabel = SKLabelNode(fontNamed: "SF Pro Rounded")
     private let mapLayer = SKNode()
     private let riverLayer = SKNode()
+    private let routeLayer = SKNode()
     private let cityLayer = SKNode()
     private let armyLayer = SKNode()
     private let mapContainer = SKNode()
@@ -26,7 +27,7 @@ final class GameScene: SKScene {
     /// Hex positions are measured down from the top of the scene, so a resize
     /// invalidates them. Kept so `didChangeSize` can redraw without waiting for
     /// the next state change to arrive from SwiftUI.
-    private var lastDrawn: (map: StaticHexMap, world: WorldState, selectedHexID: HexID?)?
+    private var lastDrawn: (map: StaticHexMap, world: WorldState, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>, previewRoute: MovementRoute?)?
 
     override func didMove(to _: SKView) {
         scaleMode = .resizeFill
@@ -47,6 +48,7 @@ final class GameScene: SKScene {
         addChild(mapContainer)
         mapContainer.addChild(mapLayer)
         mapContainer.addChild(riverLayer)
+        mapContainer.addChild(routeLayer)
         mapContainer.addChild(cityLayer)
         mapContainer.addChild(armyLayer)
     }
@@ -55,14 +57,21 @@ final class GameScene: SKScene {
         titleLabel.position = CGPoint(x: size.width / 2, y: size.height - 42)
         turnLabel.position = CGPoint(x: size.width / 2, y: size.height - 70)
         if let last = lastDrawn {
-            drawMap(last.map, world: last.world, selectedHexID: last.selectedHexID)
+            drawMap(
+                last.map,
+                world: last.world,
+                selectedHexID: last.selectedHexID,
+                reachableHexIDs: last.reachableHexIDs,
+                encounterHexIDs: last.encounterHexIDs,
+                previewRoute: last.previewRoute
+            )
         }
     }
 
-    func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, cameraResetToken: Int) {
+    func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>, previewRoute: MovementRoute?, cameraResetToken: Int) {
         titleLabel.text = map.displayName
         turnLabel.text = "Раунд \(state.turn) · \(state.activePlayer.displayName) · \(phaseName(state.phase))"
-        drawMap(map, world: world, selectedHexID: selectedHexID)
+        drawMap(map, world: world, selectedHexID: selectedHexID, reachableHexIDs: reachableHexIDs, encounterHexIDs: encounterHexIDs, previewRoute: previewRoute)
         if lastCameraResetToken != cameraResetToken {
             lastCameraResetToken = cameraResetToken
             resetCamera()
@@ -116,9 +125,16 @@ final class GameScene: SKScene {
         setZoom(zoom * (1 + event.magnification), anchoredAt: event.location(in: self))
     }
 
-    private func drawMap(_ map: StaticHexMap, world: WorldState, selectedHexID: HexID?) {
-        lastDrawn = (map, world, selectedHexID)
-        [mapLayer, riverLayer, cityLayer, armyLayer].forEach { $0.removeAllChildren() }
+    private func drawMap(
+        _ map: StaticHexMap,
+        world: WorldState,
+        selectedHexID: HexID?,
+        reachableHexIDs: Set<HexID>,
+        encounterHexIDs: Set<HexID>,
+        previewRoute: MovementRoute?
+    ) {
+        lastDrawn = (map, world, selectedHexID, reachableHexIDs, encounterHexIDs, previewRoute)
+        [mapLayer, riverLayer, routeLayer, cityLayer, armyLayer].forEach { $0.removeAllChildren() }
         hexCenters = [:]
 
         for hex in map.hexes {
@@ -127,8 +143,8 @@ final class GameScene: SKScene {
             let node = SKShapeNode(path: hexPath(center: center))
             node.name = "hex:\(hex.id.rawValue)"
             node.fillColor = terrainColor(hex.terrainID)
-            node.strokeColor = .init(white: 0.15, alpha: 0.9)
-            node.lineWidth = Self.gridLineWidth
+            node.strokeColor = strokeColor(for: hex.id, selectedHexID: selectedHexID, reachableHexIDs: reachableHexIDs, encounterHexIDs: encounterHexIDs)
+            node.lineWidth = hex.id == selectedHexID || reachableHexIDs.contains(hex.id) ? Self.selectionLineWidth : Self.gridLineWidth
             mapLayer.addChild(node)
         }
 
@@ -155,6 +171,20 @@ final class GameScene: SKScene {
             riverLayer.addChild(water)
         }
         updateRiverLineWidths()
+
+        if let previewRoute {
+            let path = CGMutablePath()
+            for (index, id) in previewRoute.hexIDs.enumerated() {
+                guard let center = hexCenters[id] else { continue }
+                if index == 0 { path.move(to: center) } else { path.addLine(to: center) }
+            }
+            let line = SKShapeNode(path: path)
+            line.strokeColor = .init(red: 1, green: 0.84, blue: 0.28, alpha: 1)
+            line.lineWidth = 7 / zoom
+            line.lineCap = .round
+            line.zPosition = 3
+            routeLayer.addChild(line)
+        }
 
         for city in world.cities {
             guard let center = hexCenters[city.hexID] else { continue }
@@ -253,6 +283,13 @@ final class GameScene: SKScene {
         let x = 110 + hexRadius * sqrt(3) * (q + r / 2)
         let y = size.height - 155 - hexRadius * 1.5 * r
         return CGPoint(x: x, y: y)
+    }
+
+    private func strokeColor(for id: HexID, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>) -> SKColor {
+        if id == selectedHexID { return .white }
+        if encounterHexIDs.contains(id) { return .init(red: 0.96, green: 0.24, blue: 0.20, alpha: 1) }
+        if reachableHexIDs.contains(id) { return .init(red: 0.30, green: 0.86, blue: 0.95, alpha: 1) }
+        return .init(white: 0.15, alpha: 0.9)
     }
 
     /// The selection outline drawn wholly inside its hex.
