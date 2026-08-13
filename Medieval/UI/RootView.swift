@@ -185,15 +185,20 @@ struct GameScreen: View {
     }
 
     private var mapInspector: some View {
-        let selected = game.content.scenario.map.hexes.first { $0.id == game.selectedHexID }
+        let selected = game.selectedInspection
         return VStack(alignment: .leading, spacing: 10) {
             Text("Інспектор гекса")
                 .font(.headline)
             if let selected {
                 Text(selected.id.rawValue).font(.system(.body, design: .monospaced))
                 Text("Координати: \(selected.coordinate.q), \(selected.coordinate.r)")
-                Text("Місцевість: \(selected.terrainID.rawValue)")
-                Text(game.content.isPassable(selected) ? "Прохідний" : "Непрохідний")
+                Text("Місцевість: \(selected.terrain)")
+                Text("Рух: \(selected.movementCost) · Захист: \(signed(selected.defenseModifier)) · Дохід: \(signed(selected.incomeModifier))")
+                Text(selected.riverCount == 0 ? "Річки: немає" : "Річки на межах: \(selected.riverCount)")
+                Divider()
+                cityInspector(selected.city)
+                Divider()
+                armyInspector(selected.armies)
                 if game.state.phase == .capitalPlacement {
                     Text("Столицю розміщує: \(game.state.activePlayer.displayName)")
                         .fontWeight(.semibold)
@@ -226,6 +231,33 @@ struct GameScreen: View {
         }
         .frame(width: 230)
         .padding()
+    }
+
+    /// Anything the hex does not have is stated outright rather than left blank,
+    /// so an empty panel never reads as a panel that failed to load.
+    @ViewBuilder
+    private func cityInspector(_ city: CityInspection?) -> some View {
+        if let city {
+            Text(city.isCapital ? "Столиця · \(city.level)" : city.level).font(.headline)
+            Text("Власник: \(city.owner ?? "нічия")")
+            Text("Дохід: \(city.income.map(String.init) ?? "невідомо") · Найм за хід: \(city.recruitmentLimit.map(String.init) ?? "невідомо")")
+            Text(city.buildings.isEmpty ? "Будівлі: немає" : "Будівлі: \(city.buildings.joined(separator: ", "))")
+        } else {
+            Text("Місто: немає").foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func armyInspector(_ armies: [ArmyInspection]) -> some View {
+        if armies.isEmpty {
+            Text("Армії: немає").foregroundStyle(.secondary)
+        } else {
+            ForEach(armies) { army in
+                Text("Армія · \(army.owner)").font(.headline)
+                Text(army.units.isEmpty ? "Юніти: немає" : army.units.map { "\($0.name) \($0.hitPoints) HP" }.joined(separator: ", "))
+                Text(army.hasMoved ? "Запас руху: використано" : "Запас руху: \(army.movementPoints)")
+            }
+        }
     }
 
     private func battleReport(_ report: BattleResult) -> some View {
@@ -275,5 +307,9 @@ struct GameScreen: View {
         case .green: .green
         case .gold: .yellow
         }
+    }
+
+    private func signed(_ value: Int) -> String {
+        value >= 0 ? "+\(value)" : "\(value)"
     }
 }
