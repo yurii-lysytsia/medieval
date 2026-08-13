@@ -62,6 +62,29 @@ struct GameScreen: View {
         }
     }
 
+    private var handoffScreen: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            Image(systemName: "hand.raised.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(.brown)
+            Text("Передайте пристрій")
+                .font(.largeTitle.bold())
+            Text("Наступний хід: \(coordinator.game.state.activePlayer.displayName)")
+                .font(.title3)
+            Text("Ігрове поле та попередній вибір приховано.")
+                .foregroundStyle(.secondary)
+            Button("Почати хід") {
+                coordinator.game.confirmHandoff()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.return, modifiers: [])
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     private var mapInspector: some View {
         let selected = game.content.scenario.map.hexes.first { $0.id == game.selectedHexID }
         return VStack(alignment: .leading, spacing: 10) {

@@ -1,12 +1,19 @@
 import Foundation
 
+public enum PlayerStatus: String, Codable, Equatable, Sendable {
+    case active
+    case eliminated
+}
+
 public struct Player: Codable, Equatable, Sendable, Identifiable {
     public let id: UUID
     public let displayName: String
+    public let status: PlayerStatus
 
-    public init(id: UUID = UUID(), displayName: String) {
+    public init(id: UUID = UUID(), displayName: String, status: PlayerStatus = .active) {
         self.id = id
         self.displayName = displayName
+        self.status = status
     }
 }
 
@@ -90,6 +97,11 @@ public struct GameState: Codable, Equatable, Sendable {
             return "Turn number must be positive."
         }
         return nil
+    }
+
+    mutating func completeHandoff(using action: GameAction) {
+        phase = .economy
+        actionHistory.append(action)
     }
 }
 

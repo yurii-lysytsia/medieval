@@ -266,6 +266,7 @@ public enum GamePhase: String, Codable, Equatable, Sendable {
     case construction
     case movement
     case combat
+    case handoff
     case playerTurn
     case resolvingTurn
     case finished
