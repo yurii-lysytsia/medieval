@@ -6,7 +6,7 @@ if ! command -v swiftformat >/dev/null 2>&1; then
   exit 1
 fi
 
-swiftformat --lint --cache ignore Medieval MedievalDomain MedievalTests MedievalTestsUI
+swiftformat --lint --cache ignore Medieval MedievalTests MedievalTestsUI
 
 # Unit tests only. The UI tests need code signing, take minutes, and drive the
 # real window server, so they run from Scripts/verify-ui.sh instead of holding

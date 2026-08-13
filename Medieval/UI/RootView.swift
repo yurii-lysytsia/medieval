@@ -1,4 +1,3 @@
-import MedievalDomain
 import SwiftUI
 
 struct RootView: View {

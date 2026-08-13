@@ -1,5 +1,4 @@
 import Foundation
-import MedievalDomain
 
 /// Boundary for save storage. The concrete file-backed implementation arrives in MED-48.
 protocol GameSaveStore {

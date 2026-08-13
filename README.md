@@ -60,7 +60,7 @@ settles can stall a launch test. Quit noisy background apps if one hangs.
 To automatically apply the repository formatting rules:
 
 ```sh
-swiftformat Medieval MedievalDomain MedievalTests MedievalTestsUI
+swiftformat Medieval MedievalTests MedievalTestsUI
 ```
 
 The supported macOS range and the compatibility-build command are documented in

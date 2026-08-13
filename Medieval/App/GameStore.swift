@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import MedievalDomain
 
 @MainActor
 final class GameStore: ObservableObject {

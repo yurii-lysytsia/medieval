@@ -1,4 +1,3 @@
-import MedievalDomain
 import SpriteKit
 
 final class GameScene: SKScene {
