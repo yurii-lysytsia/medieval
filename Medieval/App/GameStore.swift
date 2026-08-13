@@ -77,6 +77,27 @@ final class GameStore: ObservableObject {
         previewRoute = nil
     }
 
+    func placeCapital() {
+        guard state.phase == .capitalPlacement,
+              let hexID = selectedHexID,
+              let playerID = state.activePlayer.worldPlayerID,
+              case let .success(nextWorld) = CapitalPlacementRules.placeCapital(
+                  for: playerID,
+                  at: hexID,
+                  in: world,
+                  terrain: content.terrain,
+                  cityLevels: content.cityLevels
+              )
+        else { return }
+        world = nextWorld
+        if world.phase == .economy {
+            state.finishCapitalPlacement()
+        } else {
+            state.advanceCapitalPlacement()
+        }
+        selectedHexID = nil
+    }
+
     func resetMapCamera() {
         cameraResetToken += 1
     }
@@ -123,14 +144,28 @@ final class GameStore: ObservableObject {
         battleReport = nil
     }
 
-    func startNewGame() {
+    func startNewGame(setup: [GameSetupPlayer]? = nil) {
         content = Self.loadBundledContent()
         world = content.scenario.world
         selectedHexID = nil
         clearMovementPreview()
         pendingEncounter = nil
         battleReport = nil
-        state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName, worldPlayerID: $0.id) }, phase: world.phase)
+        // The wizard validates before it gets here and reports what is wrong;
+        // re-validating would only give us a second, silent answer, and the
+        // fallback it used to take started a different match than the one the
+        // player set up.
+        let choices = setup ?? world.players.enumerated().map { index, player in
+            GameSetupPlayer(name: player.displayName, color: PlayerColor.allCases[index])
+        }
+        let worldPlayers = choices.enumerated().map { index, choice in
+            WorldPlayer(id: WorldPlayerID(rawValue: "player-\(index + 1)"), displayName: choice.name)
+        }
+        world.configurePlayers(worldPlayers)
+        let players = worldPlayers.enumerated().map { index, worldPlayer in
+            Player(displayName: choices[index].name, worldPlayerID: worldPlayer.id, color: choices[index].color)
+        }
+        state = GameState(players: players, phase: world.phase)
     }
 
     private func clearMovementPreview() {

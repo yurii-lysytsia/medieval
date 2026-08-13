@@ -6,7 +6,7 @@ struct RootView: View {
     var body: some View {
         switch coordinator.route {
         case .menu:
-            MainMenuView(onNewGame: coordinator.startNewGame)
+            MainMenuView(onNewGame: coordinator.startNewGame(_:))
         case .game:
             // The game screen observes the store directly. Reaching through
             // `coordinator.game` from a view that only observes the coordinator
@@ -146,6 +146,14 @@ struct GameScreen: View {
                 Text("Координати: \(selected.coordinate.q), \(selected.coordinate.r)")
                 Text("Місцевість: \(selected.terrainID.rawValue)")
                 Text(game.content.isPassable(selected) ? "Прохідний" : "Непрохідний")
+                if game.state.phase == .capitalPlacement {
+                    Text("Столицю розміщує: \(game.state.activePlayer.displayName)")
+                        .fontWeight(.semibold)
+                    Button("Заснувати столицю") {
+                        game.placeCapital()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
                 if let route = game.previewRoute {
                     Text("Маршрут: \(route.cost) руху")
                         .fontWeight(.semibold)

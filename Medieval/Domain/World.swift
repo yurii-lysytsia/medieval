@@ -347,6 +347,24 @@ public struct WorldState: Codable, Equatable, Sendable {
         riverBoundaries.first { $0.boundary.connects(firstHexID, secondHexID) }
     }
 
+    /// Seats the players a new match was set up with, and opens capital placement.
+    ///
+    /// Only valid on a scenario as loaded. The earlier version of this cleared
+    /// cities, buildings, units and armies to make room, which is a match being
+    /// silently thrown away — starting a new game reloads the content instead,
+    /// so this states the expectation rather than acting on it.
+    public mutating func configurePlayers(_ players: [WorldPlayer]) {
+        if let violation = Self.invariantViolation(playerCount: players.count) {
+            preconditionFailure(violation)
+        }
+        precondition(
+            cities.isEmpty && buildings.isEmpty && units.isEmpty && armies.isEmpty,
+            "Players can only be seated on a world that has not been played yet."
+        )
+        self.players = players
+        phase = .capitalPlacement
+    }
+
     mutating func addCapital(for playerID: WorldPlayerID, at hexID: HexID, levelID: CityLevelID) {
         cities.append(City(id: CityID(rawValue: "capital-\(playerID.rawValue)"), ownerID: playerID, hexID: hexID, levelID: levelID, isCapital: true))
         if cities.filter(\.isCapital).count == players.count {

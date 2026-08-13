@@ -10,8 +10,8 @@ final class AppCoordinator: ObservableObject {
     @Published private(set) var route: Route = .menu
     let game = GameStore()
 
-    func startNewGame() {
-        game.startNewGame()
+    func startNewGame(_ setup: [GameSetupPlayer]) {
+        game.startNewGame(setup: setup)
         route = .game
     }
 
