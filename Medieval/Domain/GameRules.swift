@@ -44,12 +44,22 @@ extension GameAction: Codable {
     }
 }
 
-public enum GameRuleError: Error, Equatable, Sendable {
+public enum GameRuleError: Error, Equatable, LocalizedError, Sendable {
     case playerIsNotActive
     case invalidPhase(GamePhase)
     case playerNotFound(UUID)
     case playerAlreadyEliminated(UUID)
     case gameIsFinished
+
+    public var errorDescription: String? {
+        switch self {
+        case .playerIsNotActive: "Зараз хід іншого гравця."
+        case let .invalidPhase(phase): "Ця дія недоступна у фазі \(phase.rawValue)."
+        case .playerNotFound: "Гравця не знайдено."
+        case .playerAlreadyEliminated: "Цей гравець уже вибув."
+        case .gameIsFinished: "Партію вже завершено."
+        }
+    }
 }
 
 public enum GameRules {

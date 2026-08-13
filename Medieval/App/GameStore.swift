@@ -13,6 +13,8 @@ final class GameStore: ObservableObject {
     @Published private(set) var pendingEncounter: PendingEncounter?
     @Published private(set) var battleReport: BattleResult?
     @Published private(set) var cameraResetToken = 0
+    @Published private(set) var notices: [GameNotice] = []
+    @Published private(set) var criticalNotice: GameNotice?
 
     init(
         state: GameState = GameState(players: [Player(displayName: "Корона"), Player(displayName: "Союз")]),
@@ -33,9 +35,17 @@ final class GameStore: ObservableObject {
         selectedHexID.flatMap { HexInspection.inspect($0, map: content.scenario.map, world: world, content: content) }
     }
 
+    var journalItems: [JournalItem] {
+        state.journal.enumerated().map { JournalItem(entry: $0.element, index: $0.offset, players: state.players) }
+    }
+
     @discardableResult
     func send(_ action: GameAction) -> Bool {
-        guard case let .success(next) = GameRules.apply(action, to: state) else { return false }
+        let result = GameRules.apply(action, to: state)
+        guard case let .success(next) = result else {
+            if case let .failure(error) = result { present(error.localizedDescription, severity: .error) }
+            return false
+        }
         state = next
         world.setPhase(next.phase)
         return true
@@ -63,6 +73,8 @@ final class GameStore: ObservableObject {
         guard send(.advancePhase(playerID: state.activePlayer.id)) else { return }
         world = resolution.world
         economy = resolution.economy
+        let delta = resolution.entries.map(\.amount).reduce(0, +)
+        present("Економіку підраховано: \(delta >= 0 ? "+" : "")\(delta) монет.", severity: .success)
     }
 
     func endTurn() {
@@ -76,6 +88,7 @@ final class GameStore: ObservableObject {
            let playerID = state.activePlayer.worldPlayerID
         {
             world.resetMovementCommands(for: playerID)
+            present("Хід гравця \(state.activePlayer.displayName) розпочато.", severity: .information)
         }
     }
 
@@ -117,12 +130,17 @@ final class GameStore: ObservableObject {
                   terrain: content.terrain,
                   cityLevels: content.cityLevels
               )
-        else { return }
+        else {
+            present("Неможливо заснувати столицю на вибраному гексі.", severity: .error)
+            return
+        }
         world = nextWorld
         if world.phase == .economy {
             state.finishCapitalPlacement()
+            present("Усі столиці розміщено. Починається економічна фаза.", severity: .success)
         } else {
             state.advanceCapitalPlacement()
+            present("Столицю засновано. Хід наступного гравця.", severity: .success)
         }
         selectedHexID = nil
     }
@@ -147,7 +165,10 @@ final class GameStore: ObservableObject {
             terrain: content.terrain,
             units: content.units
         )
-        guard case let .success(resolution) = result else { return }
+        guard case let .success(resolution) = result else {
+            present("Маршрут більше недоступний. Оберіть рух ще раз.", severity: .error)
+            return
+        }
         state = resolution.game
         world = resolution.world
         pendingEncounter = resolution.encounter
@@ -172,10 +193,15 @@ final class GameStore: ObservableObject {
         world = resolution.world
         battleReport = report
         pendingEncounter = nil
+        present("Бій завершено. Звіт додано до журналу.", severity: .success)
     }
 
     func dismissBattleReport() {
         battleReport = nil
+    }
+
+    func dismissCriticalNotice() {
+        criticalNotice = nil
     }
 
     func startNewGame(setup: [GameSetupPlayer]? = nil) {
@@ -185,6 +211,8 @@ final class GameStore: ObservableObject {
         clearMovementPreview()
         pendingEncounter = nil
         battleReport = nil
+        notices = []
+        criticalNotice = nil
         // The wizard validates before it gets here and reports what is wrong;
         // re-validating would only give us a second, silent answer, and the
         // fallback it used to take started a different match than the one the
@@ -207,6 +235,19 @@ final class GameStore: ObservableObject {
         movementPreview = nil
         previewRoute = nil
     }
+
+    /// Records something worth telling the player about, and puts an error in
+    /// front of them rather than only in the log. The backlog is capped because
+    /// it is a running commentary, not the match record — the match keeps its
+    /// own journal in `GameState`.
+    private func present(_ text: String, severity: NoticeSeverity) {
+        let notice = GameNotice(turn: state.turn, phase: state.phase, severity: severity, text: text)
+        notices.append(notice)
+        if notices.count > Self.retainedNotices { notices.removeFirst(notices.count - Self.retainedNotices) }
+        if severity == .error { criticalNotice = notice }
+    }
+
+    private static let retainedNotices = 50
 
     private static func loadBundledContent() -> GameContentConfiguration {
         do {

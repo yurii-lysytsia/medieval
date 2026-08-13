@@ -23,25 +23,10 @@ public struct TurnHUDSnapshot: Equatable, Sendable {
         playerName = state.activePlayer.displayName
         playerColor = state.activePlayer.color
         turn = state.turn
-        phaseTitle = Self.title(for: state.phase)
+        phaseTitle = state.phase.displayTitle
         coins = state.activePlayer.worldPlayerID.flatMap(economy.coins) ?? 0
         hint = Self.hint(for: state.phase)
         canAdvance = !hasBlockingPresentation && ![.capitalPlacement, .handoff, .finished].contains(state.phase)
-    }
-
-    private static func title(for phase: GamePhase) -> String {
-        switch phase {
-        case .setup: "Підготовка"
-        case .capitalPlacement: "Розміщення столиць"
-        case .economy: "Економіка"
-        case .construction: "Будівництво"
-        case .movement: "Рух"
-        case .combat: "Бій"
-        case .handoff: "Передача ходу"
-        case .playerTurn: "Хід гравця"
-        case .resolvingTurn: "Підсумок ходу"
-        case .finished: "Завершено"
-        }
     }
 
     private static func hint(for phase: GamePhase) -> String {
@@ -54,6 +39,26 @@ public struct TurnHUDSnapshot: Equatable, Sendable {
         case .handoff: "Передайте Mac наступному гравцеві."
         case .finished: "Партію завершено."
         default: "Виконайте доступну дію або перейдіть до наступної фази."
+        }
+    }
+}
+
+extension GamePhase {
+    /// One name per phase, used by both the HUD and the journal — a phase shown
+    /// as its raw value (`movement`) in one place and as "Рух" in another reads
+    /// like two different things.
+    var displayTitle: String {
+        switch self {
+        case .setup: "Підготовка"
+        case .capitalPlacement: "Розміщення столиць"
+        case .economy: "Економіка"
+        case .construction: "Будівництво"
+        case .movement: "Рух"
+        case .combat: "Бій"
+        case .handoff: "Передача ходу"
+        case .playerTurn: "Хід гравця"
+        case .resolvingTurn: "Підсумок ходу"
+        case .finished: "Завершено"
         }
     }
 }

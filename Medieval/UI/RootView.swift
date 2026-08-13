@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct RootView: View {
@@ -21,6 +22,7 @@ struct RootView: View {
 struct GameScreen: View {
     @ObservedObject var game: GameStore
     let onShowMenu: () -> Void
+    @State private var showsJournal = false
 
     var body: some View {
         if game.state.phase == .finished {
@@ -38,7 +40,11 @@ struct GameScreen: View {
             if let report = game.battleReport {
                 battleReport(report)
             }
+            if let notice = game.criticalNotice {
+                criticalNotice(notice)
+            }
         }
+        .sheet(isPresented: $showsJournal) { journalView }
     }
 
     private var playBoard: some View {
@@ -131,6 +137,7 @@ struct GameScreen: View {
             .keyboardShortcut(.return, modifiers: [])
             .disabled(!hud.canAdvance)
             Button("Огляд мапи") { game.resetMapCamera() }
+            Button("Журнал") { showsJournal = true }
             Button("До меню", action: onShowMenu)
         }
         .fixedSize()
@@ -179,6 +186,7 @@ struct GameScreen: View {
             Button("Повернутися до меню", action: onShowMenu)
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+            Button("Вийти з гри") { NSApplication.shared.terminate(nil) }
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -298,6 +306,53 @@ struct GameScreen: View {
         case .fortifications: "Укріплення"
         case .garrison: "Гарнізон"
         }
+    }
+
+    private var journalView: some View {
+        NavigationStack {
+            List {
+                Section("Повідомлення") {
+                    if game.notices.isEmpty {
+                        Text("Поки що порожньо.").foregroundStyle(.secondary)
+                    }
+                    ForEach(game.notices.reversed()) { notice in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(notice.text)
+                            Text("Хід \(notice.turn) · \(notice.phase.displayTitle) · \(notice.date.formatted(date: .omitted, time: .shortened))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                Section("Події партії") {
+                    if game.journalItems.isEmpty {
+                        Text("Подій ще не було.").foregroundStyle(.secondary)
+                    }
+                    ForEach(game.journalItems.reversed()) { item in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(item.text)
+                            Text("Хід \(item.turn) · \(item.phase.displayTitle)")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Журнал подій")
+            .frame(minWidth: 560, minHeight: 420)
+        }
+    }
+
+    private func criticalNotice(_ notice: GameNotice) -> some View {
+        VStack(spacing: 12) {
+            Label("Дія не виконана", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline).foregroundStyle(.red)
+            Text(notice.text)
+            Button("Зрозуміло") { game.dismissCriticalNotice() }
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(20)
+        .frame(width: 360)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(radius: 16)
     }
 
     private func playerColor(_ color: PlayerColor) -> Color {
