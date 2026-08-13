@@ -48,7 +48,7 @@ final class GameStore: ObservableObject {
     func startNewGame() {
         content = Self.loadBundledContent()
         selectedHexID = nil
-        state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName) })
+        state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName, worldPlayerID: $0.id) })
     }
 
     private static func loadBundledContent() -> GameContentConfiguration {

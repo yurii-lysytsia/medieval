@@ -4,11 +4,12 @@ public enum GameAction: Equatable, Sendable {
     case advancePhase(playerID: UUID)
     case endTurn(playerID: UUID)
     case confirmHandoff(playerID: UUID)
+    case eliminatePlayer(playerID: UUID)
 }
 
 extension GameAction: Codable {
     private enum CodingKeys: String, CodingKey { case kind, playerID }
-    private enum Kind: String, Codable { case advancePhase, endTurn, confirmHandoff }
+    private enum Kind: String, Codable { case advancePhase, endTurn, confirmHandoff, eliminatePlayer }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -19,6 +20,8 @@ extension GameAction: Codable {
             self = try .endTurn(playerID: container.decode(UUID.self, forKey: .playerID))
         case .confirmHandoff:
             self = try .confirmHandoff(playerID: container.decode(UUID.self, forKey: .playerID))
+        case .eliminatePlayer:
+            self = try .eliminatePlayer(playerID: container.decode(UUID.self, forKey: .playerID))
         }
     }
 
@@ -34,6 +37,9 @@ extension GameAction: Codable {
         case let .confirmHandoff(playerID):
             try container.encode(Kind.confirmHandoff, forKey: .kind)
             try container.encode(playerID, forKey: .playerID)
+        case let .eliminatePlayer(playerID):
+            try container.encode(Kind.eliminatePlayer, forKey: .kind)
+            try container.encode(playerID, forKey: .playerID)
         }
     }
 }
@@ -41,11 +47,15 @@ extension GameAction: Codable {
 public enum GameRuleError: Error, Equatable, Sendable {
     case playerIsNotActive
     case invalidPhase(GamePhase)
+    case playerNotFound(UUID)
+    case playerAlreadyEliminated(UUID)
+    case gameIsFinished
 }
 
 public enum GameRules {
     /// The sole domain entry point for changing a game. Invalid actions leave state untouched.
     public static func apply(_ action: GameAction, to state: GameState) -> Result<GameState, GameRuleError> {
+        guard state.result == nil else { return .failure(.gameIsFinished) }
         var next = state
 
         switch action {

@@ -8,12 +8,36 @@ public enum PlayerStatus: String, Codable, Equatable, Sendable {
 public struct Player: Codable, Equatable, Sendable, Identifiable {
     public let id: UUID
     public let displayName: String
+    public let worldPlayerID: WorldPlayerID?
     public let status: PlayerStatus
 
-    public init(id: UUID = UUID(), displayName: String, status: PlayerStatus = .active) {
+    public init(id: UUID = UUID(), displayName: String, worldPlayerID: WorldPlayerID? = nil, status: PlayerStatus = .active) {
         self.id = id
         self.displayName = displayName
+        self.worldPlayerID = worldPlayerID
         self.status = status
+    }
+}
+
+public enum MatchResult: Codable, Equatable, Sendable {
+    case winner(playerID: UUID)
+    case draw(playerIDs: [UUID])
+}
+
+public enum MatchJournalEvent: Codable, Equatable, Sendable {
+    case playerEliminated(playerID: UUID)
+    case matchFinished(MatchResult)
+}
+
+public struct MatchJournalEntry: Codable, Equatable, Sendable {
+    public let turn: Int
+    public let phase: GamePhase
+    public let event: MatchJournalEvent
+
+    public init(turn: Int, phase: GamePhase, event: MatchJournalEvent) {
+        self.turn = turn
+        self.phase = phase
+        self.event = event
     }
 }
 
@@ -102,6 +126,22 @@ public struct GameState: Codable, Equatable, Sendable {
     mutating func completeHandoff(using action: GameAction) {
         phase = .economy
         actionHistory.append(action)
+    }
+
+    mutating func eliminate(_ playerID: UUID, using action: GameAction) {
+        guard let index = players.firstIndex(where: { $0.id == playerID }) else { return }
+        let player = players[index]
+        players[index] = Player(id: player.id, displayName: player.displayName, worldPlayerID: player.worldPlayerID, status: .eliminated)
+        journal.append(MatchJournalEntry(turn: turn, phase: phase, event: .playerEliminated(playerID: playerID)))
+        actionHistory.append(action)
+
+        let survivors = activePlayers
+        if survivors.count == 1 {
+            let result = MatchResult.winner(playerID: survivors[0].id)
+            self.result = result
+            phase = .finished
+            journal.append(MatchJournalEntry(turn: turn, phase: .finished, event: .matchFinished(result)))
+        }
     }
 }
 
