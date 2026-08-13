@@ -61,7 +61,7 @@ final class GameScene: SKScene {
 
     func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, cameraResetToken: Int) {
         titleLabel.text = map.displayName
-        turnLabel.text = "Хід \(state.turn) · \(state.activePlayer.displayName)"
+        turnLabel.text = "Раунд \(state.turn) · \(state.activePlayer.displayName) · \(phaseName(state.phase))"
         drawMap(map, world: world, selectedHexID: selectedHexID)
         if lastCameraResetToken != cameraResetToken {
             lastCameraResetToken = cameraResetToken
@@ -321,6 +321,18 @@ final class GameScene: SKScene {
         case "shallows": .init(red: 0.28, green: 0.63, blue: 0.70, alpha: 1)
         case "deep-water": .init(red: 0.10, green: 0.25, blue: 0.52, alpha: 1)
         default: .magenta
+        }
+    }
+
+    private func phaseName(_ phase: GamePhase) -> String {
+        switch phase {
+        case .economy: "Економіка"
+        case .construction: "Будівництво й найм"
+        case .movement: "Рух"
+        case .combat: "Бої"
+        case .handoff: "Передача ходу"
+        case .finished: "Завершено"
+        default: "Підготовка"
         }
     }
 }
