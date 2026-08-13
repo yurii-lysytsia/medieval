@@ -406,4 +406,13 @@ public struct WorldState: Codable, Equatable, Sendable {
             replaceUnit(Unit(id: unit.id, ownerID: unit.ownerID, typeID: unit.typeID, currentHitPoints: unit.currentHitPoints, condition: .moved, location: unit.location))
         }
     }
+
+    mutating func resetMovementCommands(for playerID: WorldPlayerID) {
+        for army in armies where army.ownerID == playerID {
+            replaceArmy(Army(id: army.id, ownerID: army.ownerID, hexID: army.hexID, unitIDs: army.unitIDs, embarkedOnShipID: army.embarkedOnShipID))
+        }
+        for unit in units where unit.ownerID == playerID && unit.condition == .moved {
+            replaceUnit(Unit(id: unit.id, ownerID: unit.ownerID, typeID: unit.typeID, currentHitPoints: unit.currentHitPoints, condition: .ready, location: unit.location))
+        }
+    }
 }

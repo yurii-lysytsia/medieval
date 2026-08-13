@@ -23,6 +23,7 @@ struct StrategicPathfinderTests {
         #expect(reachable["deep"]?.hexIDs == ["shallows", "deep"])
         #expect(reachable["plain"] == nil)
         #expect(reachable["forest"] == nil)
+        #expect(StrategicPathfinder.reachableRoutes(from: "plain", budget: 2, domain: .naval, map: map, world: world, terrain: terrain).isEmpty)
     }
 
     private let terrain = [

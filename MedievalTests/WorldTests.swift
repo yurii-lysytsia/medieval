@@ -3,6 +3,30 @@ import Foundation
 import Testing
 
 struct WorldTests {
+    @Test func newTurnResetsOnlyActivePlayersMovementCommands() {
+        let players = [WorldPlayer(id: "crown", displayName: "Crown"), WorldPlayer(id: "union", displayName: "Union")]
+        let hex = Hex(id: "h", coordinate: HexCoordinate(q: 0, r: 0), terrainID: "plains", isPassable: true)
+        var world = WorldState(
+            players: players,
+            hexes: [hex],
+            units: [
+                Unit(id: "crown-unit", ownerID: "crown", typeID: "infantry", currentHitPoints: 10, condition: .moved, location: .hex("h")),
+                Unit(id: "union-unit", ownerID: "union", typeID: "infantry", currentHitPoints: 10, condition: .moved, location: .hex("h")),
+            ],
+            armies: [
+                Army(id: "crown-army", ownerID: "crown", hexID: "h", unitIDs: ["crown-unit"], hasMoved: true),
+                Army(id: "union-army", ownerID: "union", hexID: "h", unitIDs: ["union-unit"], hasMoved: true),
+            ]
+        )
+
+        world.resetMovementCommands(for: "crown")
+
+        #expect(world.armies.first(where: { $0.id == "crown-army" })?.hasMoved == false)
+        #expect(world.units.first(where: { $0.id == "crown-unit" })?.condition == .ready)
+        #expect(world.armies.first(where: { $0.id == "union-army" })?.hasMoved == true)
+        #expect(world.units.first(where: { $0.id == "union-unit" })?.condition == .moved)
+    }
+
     @Test func worldStateRoundTripsThroughJSON() throws {
         let world = WorldState(
             players: [

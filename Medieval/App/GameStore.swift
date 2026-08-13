@@ -9,6 +9,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var selectedHexID: HexID?
     @Published private(set) var movementPreview: MovementPreview?
     @Published private(set) var previewRoute: MovementRoute?
+    @Published private(set) var pendingEncounter: PendingEncounter?
     @Published private(set) var cameraResetToken = 0
 
     init(
@@ -40,7 +41,11 @@ final class GameStore: ObservableObject {
     }
 
     func confirmHandoff() {
-        send(.confirmHandoff(playerID: state.activePlayer.id))
+        if send(.confirmHandoff(playerID: state.activePlayer.id)),
+           let playerID = state.activePlayer.worldPlayerID
+        {
+            world.resetMovementCommands(for: playerID)
+        }
     }
 
     func selectHex(_ id: HexID?) {
@@ -88,6 +93,7 @@ final class GameStore: ObservableObject {
         guard case let .success(resolution) = result else { return }
         state = resolution.game
         world = resolution.world
+        pendingEncounter = resolution.encounter
         selectedHexID = resolution.encounter?.destination ?? previewRoute.hexIDs.last
         clearMovementPreview()
     }
@@ -97,6 +103,7 @@ final class GameStore: ObservableObject {
         world = content.scenario.world
         selectedHexID = nil
         clearMovementPreview()
+        pendingEncounter = nil
         state = GameState(players: content.scenario.world.players.map { Player(displayName: $0.displayName, worldPlayerID: $0.id) }, phase: world.phase)
     }
 
