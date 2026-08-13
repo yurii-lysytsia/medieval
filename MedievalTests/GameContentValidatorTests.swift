@@ -82,6 +82,22 @@ struct GameContentValidatorTests {
         #expect(error == .unsuitableCityPlacement(hexID: "desert", terrainID: "desert"))
     }
 
+    @Test func riversMustConnectNeighboringHexes() throws {
+        let first = landHex()
+        let second = Hex(id: "far", coordinate: HexCoordinate(q: 2, r: 0), terrainID: "plains")
+        let river = RiverBoundary(id: "river", boundary: HexBoundary(firstHexID: "land", secondHexID: "far"))
+        let configuration = fixture(
+            map: map(hexes: [first, second], neighborhoods: [HexNeighborhood(hexID: "land", neighborHexIDs: []), HexNeighborhood(hexID: "far", neighborHexIDs: [])]),
+            world: world(hexes: [first, second], riverBoundaries: [river])
+        )
+
+        let error = try validationError(for: configuration)
+
+        // HexBoundary stores its ends in a canonical order, so the error names
+        // them sorted rather than in the order the content author wrote them.
+        #expect(error == .invalidRiverBoundary(id: "river", firstHexID: "far", secondHexID: "land"))
+    }
+
     private func validationError(for configuration: GameContentConfiguration) throws -> GameContentValidationError {
         let data = try JSONEncoder().encode(configuration)
         do {
@@ -179,6 +195,7 @@ struct GameContentValidatorTests {
     private func fixture(
         terrain: [TerrainDefinition]? = nil,
         units: [UnitDefinition]? = nil,
+        map: StaticHexMap? = nil,
         world: WorldState? = nil
     ) -> GameContentConfiguration {
         let resolvedWorld = world ?? self.world()
@@ -194,7 +211,7 @@ struct GameContentValidatorTests {
                 id: "test",
                 displayName: "Test",
                 startingGold: 0,
-                map: map(mirroring: resolvedWorld.hexes),
+                map: map ?? self.map(mirroring: resolvedWorld.hexes),
                 world: resolvedWorld
             )
         )
@@ -233,10 +250,26 @@ struct GameContentValidatorTests {
         )
     }
 
-    private func world(hexes: [Hex]? = nil, armies: [Army] = [], cities: [City] = []) -> WorldState {
+    private func map(hexes: [Hex], neighborhoods: [HexNeighborhood]) -> StaticHexMap {
+        StaticHexMap(
+            id: "map",
+            displayName: "Map",
+            bounds: HexMapBounds(minimumQ: 0, maximumQ: 2, minimumR: 0, maximumR: 0),
+            hexes: hexes,
+            neighborhoods: neighborhoods
+        )
+    }
+
+    private func world(
+        hexes: [Hex]? = nil,
+        riverBoundaries: [RiverBoundary] = [],
+        armies: [Army] = [],
+        cities: [City] = []
+    ) -> WorldState {
         WorldState(
             players: [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")],
             hexes: hexes ?? [landHex()],
+            riverBoundaries: riverBoundaries,
             armies: armies,
             cities: cities
         )

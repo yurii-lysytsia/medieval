@@ -65,4 +65,15 @@ struct WorldTests {
             try JSONDecoder().decode(WorldState.self, from: lonePlayer)
         }
     }
+
+    @Test func riverBoundaryIsFoundFromBothSides() {
+        let world = WorldState(
+            players: [WorldPlayer(id: "one", displayName: "One"), WorldPlayer(id: "two", displayName: "Two")],
+            hexes: [],
+            riverBoundaries: [RiverBoundary(id: "river", boundary: HexBoundary(firstHexID: "left", secondHexID: "right"))]
+        )
+
+        #expect(world.riverBoundary(between: "left", and: "right")?.id == "river")
+        #expect(world.riverBoundary(between: "right", and: "left")?.id == "river")
+    }
 }

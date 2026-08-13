@@ -141,6 +141,11 @@ public struct HexBoundary: Codable, Equatable, Hashable, Sendable {
             secondHexID: try container.decode(HexID.self, forKey: .secondHexID)
         )
     }
+
+    /// A boundary has no direction: it is the same shared edge from either hex.
+    public func connects(_ first: HexID, _ second: HexID) -> Bool {
+        (firstHexID == first && secondHexID == second) || (firstHexID == second && secondHexID == first)
+    }
 }
 
 public struct RiverBoundary: Codable, Equatable, Sendable, Identifiable {
@@ -267,5 +272,9 @@ public struct WorldState: Codable, Equatable, Sendable {
 
     private static func invariantViolation(playerCount: Int) -> String? {
         (2 ... 4).contains(playerCount) ? nil : "A match supports two to four players."
+    }
+
+    public func riverBoundary(between firstHexID: HexID, and secondHexID: HexID) -> RiverBoundary? {
+        riverBoundaries.first { $0.boundary.connects(firstHexID, secondHexID) }
     }
 }

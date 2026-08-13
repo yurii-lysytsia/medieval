@@ -9,6 +9,7 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
     case contradictoryHex(hexID: HexID)
     case asymmetricNeighborhood(hexID: HexID, neighborHexID: HexID)
     case unsuitableCityPlacement(hexID: HexID, terrainID: TerrainID)
+    case invalidRiverBoundary(id: String, firstHexID: HexID, secondHexID: HexID)
 
     public var errorDescription: String? {
         switch self {
@@ -28,6 +29,8 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
             "Hex \"\(hexID.rawValue)\" lists \"\(neighborHexID.rawValue)\" as a neighbour, but not the other way round."
         case let .unsuitableCityPlacement(hexID, terrainID):
             "City cannot be placed on hex \"\(hexID.rawValue)\" with terrain \"\(terrainID.rawValue)\"."
+        case let .invalidRiverBoundary(id, firstHexID, secondHexID):
+            "River boundary \"\(id)\" must connect neighboring hexes, but \"\(firstHexID.rawValue)\" and \"\(secondHexID.rawValue)\" do not share a border."
         }
     }
 }
@@ -179,6 +182,14 @@ public enum GameContentValidator {
                     entity: "river boundary",
                     id: river.id.rawValue,
                     reference: "second hex \"\(river.boundary.secondHexID.rawValue)\""
+                )
+            }
+            let neighbors = map.neighborhoods.first { $0.hexID == river.boundary.firstHexID }?.neighborHexIDs ?? []
+            guard neighbors.contains(river.boundary.secondHexID) else {
+                throw GameContentValidationError.invalidRiverBoundary(
+                    id: river.id.rawValue,
+                    firstHexID: river.boundary.firstHexID,
+                    secondHexID: river.boundary.secondHexID
                 )
             }
         }
