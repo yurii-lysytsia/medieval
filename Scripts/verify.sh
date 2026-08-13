@@ -6,12 +6,12 @@ if ! command -v swiftformat >/dev/null 2>&1; then
   exit 1
 fi
 
-swiftformat --lint --cache ignore Medieval Tests Package.swift
-swift test
+swiftformat --lint --cache ignore Medieval Tests
 xcodebuild \
   -project Medieval.xcodeproj \
   -scheme Medieval \
   -configuration Debug \
+  -destination 'platform=macOS' \
   -derivedDataPath .build/DerivedData \
   CODE_SIGNING_ALLOWED=NO \
-  build
+  test

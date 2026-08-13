@@ -5,15 +5,21 @@ for the game board. Game rules live in a UI-independent domain module.
 
 ## Architecture
 
-`Medieval/Domain` is the `MedievalDomain` Swift package: game rules and state,
-with no UI dependencies. The app target links it as a package product rather
-than compiling those sources itself, so the boundary is enforced by the
-compiler — app code reaches the rules only through `import MedievalDomain` and
-only through the module's `public` surface.
+`Medieval/Domain` builds as the `MedievalDomain` framework: game rules and
+state, with no UI dependencies. The app links and embeds it rather than
+compiling those sources itself, so the boundary is enforced by the compiler —
+app code reaches the rules only through `import MedievalDomain` and only
+through the module's `public` surface.
 
-`EXCLUDED_SOURCE_FILE_NAMES` keeps `Medieval/Domain` out of the app target's
-synchronized file group. New rule files dropped into that folder join the
-package automatically and need no project changes.
+The project has three targets: the `Medieval` app, the `MedievalDomain`
+framework, and the `MedievalDomainTests` bundle. Each owns a synchronized
+folder, so a new file dropped into `Medieval/Domain` or
+`Tests/MedievalDomainTests` joins its target with no project changes.
+`EXCLUDED_SOURCE_FILE_NAMES` keeps the domain folder out of the app target,
+which sweeps `Medieval/` as a whole.
+
+Content resources live in the framework's own bundle, reached through
+`Bundle(for:)`, so the app and the tests read the same file.
 
 ## Structure
 
@@ -44,7 +50,7 @@ build—from the repository root:
 To automatically apply the repository formatting rules:
 
 ```sh
-swiftformat Medieval Tests Package.swift
+swiftformat Medieval Tests
 ```
 
 The supported macOS range and the compatibility-build command are documented in

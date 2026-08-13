@@ -163,8 +163,16 @@ public enum GameContentLoadingError: Error, Equatable, LocalizedError, Sendable 
     }
 }
 
+/// Anchors `Bundle(for:)` to this framework. The domain is otherwise built from
+/// value types, and `Bundle(for:)` needs a class to locate the bundle that
+/// contains it.
+private final class BundleToken {}
+
 public enum GameContentLoader {
     public static let mvpResourceName = "MVPConfiguration"
+
+    /// The framework's own bundle, which is where its resources are copied.
+    private static let resourceBundle = Bundle(for: BundleToken.self)
 
     public static func decode(_ data: Data) throws -> GameContentConfiguration {
         let configuration: GameContentConfiguration
@@ -179,12 +187,13 @@ public enum GameContentLoader {
 
     /// Loads the bundled MVP configuration.
     ///
-    /// The resource belongs to this package, so it is read from `Bundle.module`
-    /// rather than from whichever bundle a caller happens to pass. Letting the
-    /// app read its own copy out of `Bundle.main` meant the configuration
-    /// shipped twice, and tests exercised a different file than the game did.
+    /// The resource belongs to this framework, so it is read from the
+    /// framework's own bundle rather than from whichever bundle a caller
+    /// happens to pass. Letting the app read its own copy out of `Bundle.main`
+    /// meant the configuration shipped twice, and tests exercised a different
+    /// file than the game did.
     public static func loadMVP() throws -> GameContentConfiguration {
-        guard let url = Bundle.module.url(forResource: mvpResourceName, withExtension: "json") else {
+        guard let url = resourceBundle.url(forResource: mvpResourceName, withExtension: "json") else {
             throw GameContentLoadingError.missingResource(mvpResourceName)
         }
         guard let data = try? Data(contentsOf: url) else {
