@@ -32,6 +32,7 @@ public struct GameSaveDocument: Codable, Equatable, Sendable {
     public let game: GameState
     public let world: WorldState
     public let economy: EconomyState
+    public let recruitment: RecruitmentLedger
     public let selectedHexID: HexID?
 
     public init(
@@ -42,6 +43,7 @@ public struct GameSaveDocument: Codable, Equatable, Sendable {
         game: GameState,
         world: WorldState,
         economy: EconomyState,
+        recruitment: RecruitmentLedger = RecruitmentLedger(),
         selectedHexID: HexID? = nil
     ) {
         formatVersion = Self.currentFormatVersion
@@ -49,7 +51,23 @@ public struct GameSaveDocument: Codable, Equatable, Sendable {
         self.game = game
         self.world = world
         self.economy = economy
+        self.recruitment = recruitment
         self.selectedHexID = selectedHexID
+    }
+
+    /// Decoded by hand only so that the recruitment ledger can be missing: it
+    /// arrived after the format was already in use, and a match saved before it
+    /// is still a version 1 match — one where nothing had been recruited yet as
+    /// far as this turn is concerned.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        formatVersion = try container.decode(Int.self, forKey: .formatVersion)
+        metadata = try container.decode(SaveMetadata.self, forKey: .metadata)
+        game = try container.decode(GameState.self, forKey: .game)
+        world = try container.decode(WorldState.self, forKey: .world)
+        economy = try container.decode(EconomyState.self, forKey: .economy)
+        recruitment = try container.decodeIfPresent(RecruitmentLedger.self, forKey: .recruitment) ?? RecruitmentLedger()
+        selectedHexID = try container.decodeIfPresent(HexID.self, forKey: .selectedHexID)
     }
 }
 

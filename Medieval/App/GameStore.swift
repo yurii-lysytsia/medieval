@@ -7,6 +7,10 @@ final class GameStore: ObservableObject {
     @Published private(set) var content: GameContentConfiguration
     @Published private(set) var world: WorldState
     @Published private(set) var economy: EconomyState
+    /// How much each city has recruited this turn. Kept beside the world rather
+    /// than inside it because it is spent bookkeeping, not a fact about the map:
+    /// it is cleared for a player's cities when their turn begins.
+    @Published private(set) var recruitment: RecruitmentLedger
     @Published private(set) var selectedHexID: HexID?
     @Published private(set) var movementPreview: MovementPreview?
     @Published private(set) var previewRoute: MovementRoute?
@@ -31,6 +35,7 @@ final class GameStore: ObservableObject {
         self.content = loadedContent
         world = loadedContent.scenario.world
         economy = EconomyState(players: loadedContent.scenario.world.players, startingGold: loadedContent.scenario.startingGold)
+        recruitment = RecruitmentLedger()
         self.saveCatalog = saveCatalog
         autosaveService = AutosaveService(catalog: saveCatalog)
         refreshSaves()
@@ -42,6 +47,22 @@ final class GameStore: ObservableObject {
 
     var selectedInspection: HexInspection? {
         selectedHexID.flatMap { HexInspection.inspect($0, map: content.scenario.map, world: world, content: content) }
+    }
+
+    /// The city on the selected hex, with everything it can build and recruit.
+    var selectedCityManagement: CityManagement? {
+        guard let selectedHexID,
+              let city = world.cities.first(where: { $0.hexID == selectedHexID })
+        else { return nil }
+        return CityManagement.inspect(
+            cityID: city.id,
+            activePlayerID: state.activePlayer.worldPlayerID,
+            world: world,
+            economy: economy,
+            ledger: recruitment,
+            map: content.scenario.map,
+            content: content
+        )
     }
 
     var journalItems: [JournalItem] {
@@ -103,6 +124,7 @@ final class GameStore: ObservableObject {
            let playerID = state.activePlayer.worldPlayerID
         {
             world.resetMovementCommands(for: playerID)
+            recruitment.clear(cityIDs: world.cities.filter { $0.ownerID == playerID }.map(\.id))
             present("Хід гравця \(state.activePlayer.displayName) розпочато.", severity: .information)
             scheduleAutosave()
         }
@@ -160,6 +182,89 @@ final class GameStore: ObservableObject {
         }
         selectedHexID = nil
         scheduleAutosave()
+    }
+
+    func construct(_ buildingTypeID: BuildingTypeID, in cityID: CityID) {
+        guard let playerID = state.activePlayer.worldPlayerID else { return }
+        let result = CityConstructionRules.construct(
+            buildingTypeID: buildingTypeID,
+            in: cityID,
+            for: playerID,
+            world: world,
+            economy: economy,
+            cityLevels: content.cityLevels,
+            buildings: content.buildings
+        )
+        guard case let .success(resolution) = result else {
+            if case let .failure(error) = result { present(error) }
+            return
+        }
+        world = resolution.world
+        economy = resolution.economy
+        present("\(buildingName(buildingTypeID)) збудовано.", severity: .success)
+        scheduleAutosave()
+    }
+
+    func upgradeCity(_ cityID: CityID) {
+        guard let playerID = state.activePlayer.worldPlayerID else { return }
+        let result = CityConstructionRules.upgrade(
+            cityID: cityID,
+            for: playerID,
+            world: world,
+            economy: economy,
+            cityLevels: content.cityLevels
+        )
+        guard case let .success(resolution) = result else {
+            if case let .failure(error) = result { present(error) }
+            return
+        }
+        world = resolution.world
+        economy = resolution.economy
+        let levelID = world.cities.first(where: { $0.id == cityID })?.levelID
+        let levelName = levelID.flatMap { id in content.cityLevels.first(where: { $0.id == id })?.displayName }
+        present("Місто підвищено до рівня «\(levelName ?? levelID?.rawValue ?? "")».", severity: .success)
+        scheduleAutosave()
+    }
+
+    func recruit(_ unitTypeID: UnitTypeID, in cityID: CityID) {
+        guard let playerID = state.activePlayer.worldPlayerID else { return }
+        let result = RecruitmentRules.recruit(
+            unitTypeID: unitTypeID,
+            in: cityID,
+            for: playerID,
+            world: world,
+            economy: economy,
+            ledger: recruitment,
+            map: content.scenario.map,
+            terrain: content.terrain,
+            units: content.units,
+            cityLevels: content.cityLevels
+        )
+        guard case let .success(resolution) = result else {
+            if case let .failure(error) = result { present(error) }
+            return
+        }
+        world = resolution.world
+        economy = resolution.economy
+        recruitment = resolution.ledger
+        let name = content.units.first(where: { $0.id == unitTypeID })?.displayName ?? unitTypeID.rawValue
+        present("\(name): найм завершено.", severity: .success)
+        scheduleAutosave()
+    }
+
+    private func buildingName(_ id: BuildingTypeID) -> String {
+        content.buildings.first(where: { $0.id == id })?.displayName ?? id.rawValue
+    }
+
+    /// A refused action is reported in the player's own words. The domain's
+    /// `LocalizedError` text is written for a developer reading a log, so the
+    /// panel's wording is reused here rather than shown raw.
+    private func present(_ error: CityConstructionError) {
+        present(CityManagement.wording(for: error, content: content), severity: .error)
+    }
+
+    private func present(_ error: RecruitmentError) {
+        present(CityManagement.wording(for: error, content: content), severity: .error)
     }
 
     func resetMapCamera() {
@@ -234,7 +339,7 @@ final class GameStore: ObservableObject {
     @discardableResult
     func createManualSave(named name: String) -> Bool {
         do {
-            try saveCatalog.save(GameSaveDocument(name: name, game: state, world: world, economy: economy, selectedHexID: selectedHexID))
+            try saveCatalog.save(GameSaveDocument(name: name, game: state, world: world, economy: economy, recruitment: recruitment, selectedHexID: selectedHexID))
             saveError = nil
             refreshSaves()
             present("Партію «\(name.trimmingCharacters(in: .whitespacesAndNewlines))» збережено.", severity: .success)
@@ -253,6 +358,7 @@ final class GameStore: ObservableObject {
             state = document.game
             world = document.world
             economy = document.economy
+            recruitment = document.recruitment
             selectedHexID = document.selectedHexID
             clearMovementPreview()
             pendingEncounter = nil
@@ -284,6 +390,7 @@ final class GameStore: ObservableObject {
     func startNewGame(setup: [GameSetupPlayer]? = nil) {
         content = Self.loadBundledContent()
         world = content.scenario.world
+        recruitment = RecruitmentLedger()
         selectedHexID = nil
         clearMovementPreview()
         pendingEncounter = nil
@@ -351,6 +458,7 @@ final class GameStore: ObservableObject {
             game: state,
             world: world,
             economy: economy,
+            recruitment: recruitment,
             selectedHexID: selectedHexID
         )
         let generation = nextAutosaveGeneration()

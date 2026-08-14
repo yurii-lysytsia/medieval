@@ -14,6 +14,14 @@ public struct RecruitmentLedger: Codable, Equatable, Sendable {
     mutating func recordRecruitment(in cityID: CityID) {
         recruitedByCity[cityID, default: 0] += 1
     }
+
+    /// Frees the quota of the given cities, which is what the start of their
+    /// owner's turn does. Only that player's cities are cleared, so an opponent
+    /// who recruited earlier in the round keeps their tally until their own
+    /// turn comes round.
+    public mutating func clear(cityIDs: [CityID]) {
+        for cityID in cityIDs { recruitedByCity[cityID] = nil }
+    }
 }
 
 public enum RecruitmentError: Error, Equatable, LocalizedError, Sendable {

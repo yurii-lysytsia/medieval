@@ -206,6 +206,15 @@ struct GameScreen: View {
     }
 
     private var mapInspector: some View {
+        ScrollView {
+            inspectorContent
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+        }
+        .frame(width: 268)
+    }
+
+    private var inspectorContent: some View {
         let selected = game.selectedInspection
         return VStack(alignment: .leading, spacing: 10) {
             Text("Інспектор гекса")
@@ -218,6 +227,9 @@ struct GameScreen: View {
                 Text(selected.riverCount == 0 ? "Річки: немає" : "Річки на межах: \(selected.riverCount)")
                 Divider()
                 cityInspector(selected.city)
+                if let city = game.selectedCityManagement {
+                    cityManagementPanel(city)
+                }
                 Divider()
                 armyInspector(selected.armies)
                 if game.state.phase == .capitalPlacement {
@@ -250,8 +262,70 @@ struct GameScreen: View {
             }
             Spacer()
         }
-        .frame(width: 230)
-        .padding()
+    }
+
+    /// What the city has, and what it can still be given this turn.
+    ///
+    /// The offers come from the rules themselves, so a button is disabled
+    /// exactly when the action would be refused, and the refusal is printed
+    /// under it: the player should not have to click to find out why not.
+    @ViewBuilder
+    private func cityManagementPanel(_ city: CityManagement) -> some View {
+        Text("Слоти будівель: \(city.usedBuildingSlots)/\(city.buildingSlots)")
+        Text("Найм цього ходу: \(city.recruitedThisTurn)/\(city.recruitmentLimit)")
+        if !city.garrison.isEmpty {
+            Text("Гарнізон: \(city.garrison.map { "\($0.name) \($0.hitPoints) HP" }.joined(separator: ", "))")
+        }
+
+        if city.isCommandable, game.state.phase == .construction {
+            Divider()
+            Text("Будівництво").font(.headline)
+            if city.buildings.isEmpty {
+                Text("Усе вже збудовано.").foregroundStyle(.secondary)
+            }
+            ForEach(city.buildings) { option in
+                cityActionButton(option, systemImage: "hammer.fill") {
+                    game.construct(BuildingTypeID(rawValue: option.id), in: city.cityID)
+                }
+            }
+            if let upgrade = city.upgrade {
+                cityActionButton(upgrade, title: "Підвищити до: \(upgrade.name)", systemImage: "arrow.up.circle.fill") {
+                    game.upgradeCity(city.cityID)
+                }
+            }
+
+            Divider()
+            Text("Найм").font(.headline)
+            ForEach(city.recruits) { option in
+                cityActionButton(option, systemImage: "person.3.fill") {
+                    game.recruit(UnitTypeID(rawValue: option.id), in: city.cityID)
+                }
+            }
+        } else if city.isCommandable {
+            Text("Будівництво й найм доступні у фазі будівництва.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func cityActionButton(
+        _ option: CityActionOption,
+        title: String? = nil,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Button(action: action) {
+                Label("\(title ?? option.name) · \(option.cost) 🪙", systemImage: systemImage)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .disabled(!option.isEnabled)
+            Text(option.disabledReason ?? option.detail)
+                .font(.caption)
+                .foregroundStyle(option.isEnabled ? .secondary : Color.orange)
+        }
+        .padding(.bottom, 2)
     }
 
     /// Anything the hex does not have is stated outright rather than left blank,
