@@ -1,5 +1,12 @@
 import SpriteKit
 
+/// One side's units standing on one hex, which is what a single map label
+/// counts.
+private struct UnitStack: Hashable {
+    let hexID: HexID?
+    let ownerID: WorldPlayerID
+}
+
 final class GameScene: SKScene {
     var onSelectHex: ((HexID) -> Void)?
 
@@ -67,7 +74,7 @@ final class GameScene: SKScene {
     func render(_ state: GameState, map: StaticHexMap, world: WorldState, selectedHexID: HexID?, reachableHexIDs: Set<HexID>, encounterHexIDs: Set<HexID>, previewRoute: MovementRoute?, cameraResetToken: Int) {
         titleLabel.text = map.displayName
         turnLabel.text = "Раунд \(state.turn) · \(state.activePlayer.displayName) · \(phaseName(state.phase))"
-        drawMap(map, world: world, selectedHexID: selectedHexID, reachableHexIDs: reachableHexIDs, encounterHexIDs: encounterHexIDs, previewRoute: previewRoute)
+        drawMap(map, state: state, world: world, selectedHexID: selectedHexID, reachableHexIDs: reachableHexIDs, encounterHexIDs: encounterHexIDs, previewRoute: previewRoute)
         if lastCameraResetToken != cameraResetToken {
             lastCameraResetToken = cameraResetToken
             resetCamera()
@@ -127,6 +134,7 @@ final class GameScene: SKScene {
 
     private func drawMap(
         _ map: StaticHexMap,
+        state: GameState,
         world: WorldState,
         selectedHexID: HexID?,
         reachableHexIDs: Set<HexID>,
@@ -172,39 +180,46 @@ final class GameScene: SKScene {
             routeLayer.addChild(line)
         }
 
+        let colorByOwner = playerColorsByWorldPlayer(state)
         for city in world.cities {
             guard let center = hexCenters[city.hexID] else { continue }
-            let marker = SKShapeNode(circleOfRadius: 12)
-            marker.position = center
-            marker.fillColor = .init(red: 0.93, green: 0.77, blue: 0.35, alpha: 1)
-            marker.strokeColor = .black
-            marker.lineWidth = 2
-            cityLayer.addChild(marker)
+            cityLayer.addChild(
+                cityMarker(
+                    at: center,
+                    color: ownerColor(city.ownerID, in: colorByOwner),
+                    isCapital: city.isCapital
+                )
+            )
         }
+        updateCityMarkerScales()
         for army in world.armies {
             guard let center = hexCenters[army.hexID] else { continue }
             let label = SKLabelNode(fontNamed: "SFProRounded-Bold")
             label.text = "⚔︎\(army.unitIDs.count)"
             label.fontSize = 16
-            label.fontColor = .white
+            label.fontColor = ownerColor(army.ownerID, in: colorByOwner)
             label.verticalAlignmentMode = .center
             label.position = CGPoint(x: center.x, y: center.y - 23)
             armyLayer.addChild(label)
         }
         let armyUnitIDs = Set(world.armies.flatMap(\.unitIDs))
-        let visibleUnits = Dictionary(grouping: world.units.filter { $0.condition != .destroyed && !armyUnitIDs.contains($0.id) }) { unit -> HexID? in
-            switch unit.location {
+        // Grouped by owner as well as by hex: a garrison and a besieging force
+        // can share a hex, and one label in one colour would credit both to
+        // whoever happened to come first.
+        let visibleUnits = Dictionary(grouping: world.units.filter { $0.condition != .destroyed && !armyUnitIDs.contains($0.id) }) { unit -> UnitStack in
+            let hexID: HexID? = switch unit.location {
             case let .hex(hexID): hexID
             case let .garrison(cityID): world.cities.first(where: { $0.id == cityID })?.hexID
             case .cargo: nil
             }
+            return UnitStack(hexID: hexID, ownerID: unit.ownerID)
         }
-        for (hexID, units) in visibleUnits {
-            guard let hexID, let center = hexCenters[hexID] else { continue }
+        for (stack, units) in visibleUnits {
+            guard let hexID = stack.hexID, let center = hexCenters[hexID] else { continue }
             let label = SKLabelNode(fontNamed: "SF Pro Rounded-Bold")
             label.text = units.contains(where: { $0.typeID == "ship" }) ? "⚓︎\(units.count)" : "⚔︎\(units.count)"
             label.fontSize = 16
-            label.fontColor = .white
+            label.fontColor = ownerColor(stack.ownerID, in: colorByOwner)
             label.verticalAlignmentMode = .center
             label.position = CGPoint(x: center.x, y: center.y - 23)
             armyLayer.addChild(label)
@@ -275,6 +290,7 @@ final class GameScene: SKScene {
         zoom = MapCamera.fittedZoom(content: frame.size, viewport: size)
         mapContainer.setScale(zoom)
         updateRiverLineWidths()
+        updateCityMarkerScales()
         mapContainer.position = .zero
         clampMapPosition()
     }
@@ -301,6 +317,7 @@ final class GameScene: SKScene {
         zoom = clamped
         mapContainer.setScale(zoom)
         updateRiverLineWidths()
+        updateCityMarkerScales()
         clampMapPosition()
     }
 
@@ -347,6 +364,89 @@ final class GameScene: SKScene {
         node.strokeColor = .clear
         node.zPosition = 1
         return node
+    }
+
+    /// The owner colours of the match, keyed the way the world names its
+    /// players. `GameState` holds the colours and `WorldState` the cities, so
+    /// the two are joined here rather than in either of them.
+    private func playerColorsByWorldPlayer(_ state: GameState) -> [WorldPlayerID: PlayerColor] {
+        Dictionary(
+            state.players.compactMap { player in player.worldPlayerID.map { ($0, player.color) } },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
+
+    private func ownerColor(_ ownerID: WorldPlayerID?, in colors: [WorldPlayerID: PlayerColor]) -> SKColor {
+        guard let ownerID, let color = colors[ownerID] else { return Self.neutralOwnerColor }
+        return markerColor(color)
+    }
+
+    private static let neutralOwnerColor = SKColor(red: 0.78, green: 0.78, blue: 0.80, alpha: 1)
+
+    /// The same four colours the HUD uses, so the dot next to a player's name
+    /// and their holdings on the map read as one side.
+    private func markerColor(_ color: PlayerColor) -> SKColor {
+        switch color {
+        case .red: .init(red: 0.90, green: 0.22, blue: 0.21, alpha: 1)
+        case .blue: .init(red: 0.20, green: 0.47, blue: 0.95, alpha: 1)
+        case .green: .init(red: 0.24, green: 0.72, blue: 0.35, alpha: 1)
+        case .gold: .init(red: 0.98, green: 0.80, blue: 0.18, alpha: 1)
+        }
+    }
+
+    /// A capital is a star and an ordinary city a disc, so the two stay apart
+    /// even for a player who cannot tell the owner colours apart.
+    private func cityMarker(at center: CGPoint, color: SKColor, isCapital: Bool) -> SKNode {
+        let node = SKShapeNode(
+            path: isCapital
+                ? starPath(radius: Self.capitalMarkerRadius)
+                : CGPath(
+                    ellipseIn: CGRect(
+                        x: -Self.cityMarkerRadius,
+                        y: -Self.cityMarkerRadius,
+                        width: Self.cityMarkerRadius * 2,
+                        height: Self.cityMarkerRadius * 2
+                    ),
+                    transform: nil
+                )
+        )
+        node.name = isCapital ? "city:capital" : "city:marker"
+        node.position = center
+        node.fillColor = color
+        node.strokeColor = .init(white: 0.08, alpha: 0.95)
+        node.lineWidth = 2
+        node.zPosition = 4
+        return node
+    }
+
+    private static let cityMarkerRadius: CGFloat = 12
+    private static let capitalMarkerRadius: CGFloat = 17
+    /// How far a marker may be blown up as the map shrinks. Past this it would
+    /// spill over its own hex and hide its neighbours.
+    private static let maximumCityMarkerScale: CGFloat = 2.4
+
+    /// Markers are drawn in map coordinates, so zooming out to the whole of
+    /// Europe would shrink a capital to a couple of pixels. Growing them as the
+    /// map shrinks keeps who-owns-what legible at every zoom.
+    private func updateCityMarkerScales() {
+        let scale = min(max(1 / zoom, 1), Self.maximumCityMarkerScale)
+        for node in cityLayer.children {
+            node.setScale(scale)
+        }
+    }
+
+    private func starPath(radius: CGFloat) -> CGPath {
+        let path = CGMutablePath()
+        let points = 5
+        for index in 0 ..< points * 2 {
+            let isOuter = index % 2 == 0
+            let angle = CGFloat.pi / 2 + CGFloat(index) * .pi / CGFloat(points)
+            let length = isOuter ? radius : radius * 0.44
+            let point = CGPoint(x: cos(angle) * length, y: sin(angle) * length)
+            if index == 0 { path.move(to: point) } else { path.addLine(to: point) }
+        }
+        path.closeSubpath()
+        return path
     }
 
     private func hexPath(center: CGPoint, scale: CGFloat = 1) -> CGPath {
