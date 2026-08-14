@@ -45,14 +45,7 @@ public extension GameContentLoader {
             return Hex(
                 id: HexID(rawValue: tile.id),
                 coordinate: coordinate,
-                terrainID: TerrainID(
-                    rawValue: terrainID(
-                        for: tile,
-                        at: coordinate,
-                        tileByCoordinate: tileByCoordinate,
-                        directions: directions
-                    )
-                )
+                terrainID: TerrainID(rawValue: tile.terrain)
             )
         }
         let idByCoordinate = Dictionary(hexes.map { ($0.coordinate, $0.id) }) { first, _ in first }
@@ -176,9 +169,15 @@ public extension GameContentLoader {
         "~~~mmmmmmmmmmmmmmmmm~~mmm~~~~~~~~~mmmmmm",
     ]
 
+    /// Every water marker is deep water.
+    ///
+    /// The coast used to be turned into `shallows`, which drew a pale band
+    /// around every landmass that read as a river system the campaign does not
+    /// have — Europe carries no river boundaries at all. The shallows rules
+    /// stay in the content for scenarios that do use them.
     private static func terrainName(for marker: Character) -> String? {
         switch marker {
-        case "~": "water"
+        case "~": "deep-water"
         case "p": "plains"
         case "f": "forest"
         case "h": "hills"
@@ -186,20 +185,5 @@ public extension GameContentLoader {
         case "d": "desert"
         default: nil
         }
-    }
-
-    private static func terrainID(
-        for tile: EuropeMapTile,
-        at coordinate: HexCoordinate,
-        tileByCoordinate: [HexCoordinate: EuropeMapTile],
-        directions: [HexCoordinate]
-    ) -> String {
-        guard tile.terrain == "water" else { return tile.terrain }
-        let touchesLand = directions.contains { direction in
-            tileByCoordinate[
-                HexCoordinate(q: coordinate.q + direction.q, r: coordinate.r + direction.r)
-            ]?.terrain != "water"
-        }
-        return touchesLand ? "shallows" : "deep-water"
     }
 }

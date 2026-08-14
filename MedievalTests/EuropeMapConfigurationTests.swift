@@ -12,8 +12,32 @@ struct EuropeMapConfigurationTests {
         #expect(map.neighborhoods.count == 1200)
         #expect(configuration.scenario.world.hexes == map.hexes)
         #expect(map.hexes.contains { $0.terrainID == "deep-water" })
-        #expect(map.hexes.contains { $0.terrainID == "shallows" })
         #expect(map.hexes.contains { $0.terrainID == "mountains" })
+    }
+
+    /// The campaign has one kind of water. Coastal tiles used to become
+    /// shallows, which drew a pale ring around every coast that read as rivers
+    /// the map does not have.
+    @Test func everyWaterHexIsDeepWater() throws {
+        let map = try GameContentLoader.loadEuropeMap().scenario.map
+
+        #expect(!map.hexes.contains { $0.terrainID == "shallows" })
+    }
+
+    /// A coastal city can still build ships: recruitment asks for water next
+    /// door, and deep water is water.
+    @Test func coastalLandStillHasWaterNeighbors() throws {
+        let configuration = try GameContentLoader.loadEuropeMap()
+        let map = configuration.scenario.map
+        let terrainByHex = Dictionary(uniqueKeysWithValues: map.hexes.map { ($0.id, $0.terrainID) })
+        let waterDomains = Set(configuration.terrain.filter(\.domain.isWater).map(\.id))
+
+        let coastalLand = map.neighborhoods.filter { neighborhood in
+            terrainByHex[neighborhood.hexID].map { !waterDomains.contains($0) } == true
+                && neighborhood.neighborHexIDs.contains { terrainByHex[$0].map(waterDomains.contains) == true }
+        }
+
+        #expect(!coastalLand.isEmpty)
     }
 
     @Test func generatedNeighborhoodsAreSymmetric() throws {
