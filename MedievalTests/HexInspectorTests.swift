@@ -20,8 +20,9 @@ struct HexInspectorTests {
         #expect(inspection.terrain == "Рівнина")
         #expect(inspection.riverCount == 1)
         #expect(inspection.city?.owner == "Корона")
-        #expect(inspection.city?.buildings == ["Market"])
-        #expect(inspection.city?.income == 9)
+        #expect(inspection.city?.buildings == ["Ринок"])
+        // Village 8, plains +2, market +5.
+        #expect(inspection.city?.income == 15)
         #expect(inspection.armies.first?.units.map(\.name) == ["Піхота"])
         #expect(inspection.armies.first?.units.map(\.hitPoints) == [8])
         #expect(inspection.armies.first?.movementPoints == 2)
