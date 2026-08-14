@@ -17,8 +17,6 @@ final class GameScene: SKScene {
     /// The vertical scroll delta that counts as one full zoom step. A mouse
     /// wheel tick already exceeds it; a trackpad reaches it over several events.
     private static let fullZoomStepDelta: CGFloat = 10
-    private static let minimumZoom: CGFloat = 0.12
-    private static let maximumZoom: CGFloat = 2.5
     private static let renderedTileSize = CGSize(width: 80, height: 90)
     private static let horizontalStep: CGFloat = 73
     private static let verticalStep: CGFloat = 60
@@ -274,13 +272,7 @@ final class GameScene: SKScene {
 
     private func resetCamera() {
         let frame = mapLayer.calculateAccumulatedFrame().insetBy(dx: -12, dy: -12)
-        let availableWidth = max(size.width - 40, 1)
-        let availableHeight = max(size.height - 130, 1)
-        let fittedZoom = min(
-            min(availableWidth / max(frame.width, 1), availableHeight / max(frame.height, 1)),
-            1
-        )
-        zoom = min(max(fittedZoom, Self.minimumZoom), Self.maximumZoom)
+        zoom = MapCamera.fittedZoom(content: frame.size, viewport: size)
         mapContainer.setScale(zoom)
         updateRiverLineWidths()
         mapContainer.position = .zero
@@ -296,7 +288,7 @@ final class GameScene: SKScene {
     /// and holding it still across the change gives
     /// `position' = anchor - (anchor - position) * zoom' / zoom`.
     private func setZoom(_ value: CGFloat, anchoredAt anchor: CGPoint?) {
-        let clamped = min(max(value, Self.minimumZoom), Self.maximumZoom)
+        let clamped = MapCamera.clampZoom(value)
         guard clamped != zoom else { return }
 
         if let anchor {
@@ -316,19 +308,12 @@ final class GameScene: SKScene {
         let frame = mapLayer.calculateAccumulatedFrame().insetBy(dx: -hexRadius, dy: -hexRadius)
         guard frame.width > 0, frame.height > 0 else { return }
 
-        let scaledWidth = frame.width * zoom
-        let scaledHeight = frame.height * zoom
-        let horizontal: CGFloat = if scaledWidth <= size.width {
-            size.width / 2 - (frame.midX * zoom)
-        } else {
-            min(max(mapContainer.position.x, size.width - frame.maxX * zoom), -frame.minX * zoom)
-        }
-        let vertical: CGFloat = if scaledHeight <= size.height - 100 {
-            (size.height - 100) / 2 - (frame.midY * zoom) - 35
-        } else {
-            min(max(mapContainer.position.y, 20 - frame.minY * zoom), size.height - 100 - frame.maxY * zoom)
-        }
-        mapContainer.position = CGPoint(x: horizontal, y: vertical)
+        mapContainer.position = MapCamera.clamped(
+            position: mapContainer.position,
+            content: frame,
+            zoom: zoom,
+            viewport: size
+        )
     }
 
     private func point(for coordinate: HexCoordinate) -> CGPoint {
