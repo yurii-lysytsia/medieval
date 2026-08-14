@@ -197,9 +197,28 @@ struct GameContentValidatorTests {
         #expect(error == .asymmetricNeighborhood(hexID: "a", neighborHexID: "b"))
     }
 
+    /// Content where a level asks for more buildings than the level below it
+    /// can hold describes a city that can never be upgraded — a dead end the
+    /// player would only discover several turns in.
+    @Test func cityLevelRequiringMoreBuildingsThanTheLevelBelowCanHoldIsRejected() throws {
+        let configuration = fixture(cityLevels: [
+            CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1, upgradeCost: 0),
+            CityLevelDefinition(id: "town", displayName: "Town", baseIncome: 2, buildingSlots: 4, upgradeCost: 10, requiredBuildingIDs: ["market", "walls"]),
+        ], buildings: [
+            BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 0, incomeModifier: 0, defenseModifier: 0),
+            BuildingDefinition(id: "walls", displayName: "Walls", constructionCost: 1, upkeep: 0, incomeModifier: 0, defenseModifier: 1),
+        ])
+
+        let error = try validationError(for: configuration)
+
+        #expect(error == .unreachableCityLevel(levelID: "town", required: 2, slots: 1))
+    }
+
     private func fixture(
         terrain: [TerrainDefinition]? = nil,
         units: [UnitDefinition]? = nil,
+        cityLevels: [CityLevelDefinition]? = nil,
+        buildings: [BuildingDefinition]? = nil,
         map: StaticHexMap? = nil,
         world: WorldState? = nil
     ) -> GameContentConfiguration {
@@ -210,8 +229,8 @@ struct GameContentValidatorTests {
                 TerrainDefinition(id: "ocean", displayName: "Ocean", domain: .shallows, movementCost: 0, defenseModifier: 0, incomeModifier: 0, isPassable: false, isCityBuildable: false),
             ],
             units: units ?? [unit()],
-            cityLevels: [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1, upgradeCost: 0)],
-            buildings: [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 0, incomeModifier: 0, defenseModifier: 0)],
+            cityLevels: cityLevels ?? [CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 1, buildingSlots: 1, upgradeCost: 0)],
+            buildings: buildings ?? [BuildingDefinition(id: "market", displayName: "Market", constructionCost: 1, upkeep: 0, incomeModifier: 0, defenseModifier: 0)],
             scenario: ScenarioConfiguration(
                 id: "test",
                 displayName: "Test",

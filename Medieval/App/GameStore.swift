@@ -205,6 +205,23 @@ final class GameStore: ObservableObject {
         scheduleAutosave()
     }
 
+    func demolish(_ buildingTypeID: BuildingTypeID, in cityID: CityID) {
+        guard let playerID = state.activePlayer.worldPlayerID else { return }
+        let result = CityConstructionRules.demolish(
+            buildingTypeID: buildingTypeID,
+            in: cityID,
+            for: playerID,
+            world: world
+        )
+        guard case let .success(nextWorld) = result else {
+            if case let .failure(error) = result { present(error) }
+            return
+        }
+        world = nextWorld
+        present("\(buildingName(buildingTypeID)): будівлю знесено, слот вільний.", severity: .success)
+        scheduleAutosave()
+    }
+
     func upgradeCity(_ cityID: CityID) {
         guard let playerID = state.activePlayer.worldPlayerID else { return }
         let result = CityConstructionRules.upgrade(

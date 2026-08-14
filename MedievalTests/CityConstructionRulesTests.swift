@@ -31,6 +31,32 @@ struct CityConstructionRulesTests {
         #expect(upgraded.economy.journal.last?.kind == .cityUpgrade)
     }
 
+    /// The way out of a city whose only slot holds the wrong building: the
+    /// upgrade needs a town hall, and without demolition that match is over.
+    @Test func demolishingFreesTheSlotWithoutRefunding() throws {
+        let filled = try CityConstructionRules.construct(buildingTypeID: "market", in: "capital", for: "crown", world: world(), economy: richEconomy(), cityLevels: levels, buildings: buildings).get()
+        #expect(CityConstructionRules.construct(buildingTypeID: "town-hall", in: "capital", for: "crown", world: filled.world, economy: filled.economy, cityLevels: levels, buildings: buildings) == .failure(.noBuildingSlots("capital")))
+
+        let cleared = try CityConstructionRules.demolish(buildingTypeID: "market", in: "capital", for: "crown", world: filled.world).get()
+        #expect(cleared.buildings.isEmpty)
+
+        let rebuilt = try CityConstructionRules.construct(buildingTypeID: "town-hall", in: "capital", for: "crown", world: cleared, economy: filled.economy, cityLevels: levels, buildings: buildings).get()
+        #expect(rebuilt.world.buildings.map(\.typeID) == ["town-hall"])
+        // 145 − 60 for the market − 45 for the town hall: nothing came back
+        // when the market went down.
+        #expect(rebuilt.economy.coins(for: "crown") == 40)
+    }
+
+    @Test func demolitionIsRefusedOutsideTheConstructionPhaseAndForOthersCities() throws {
+        let built = try CityConstructionRules.construct(buildingTypeID: "market", in: "capital", for: "crown", world: world(), economy: economy(), cityLevels: levels, buildings: buildings).get()
+        var moving = built.world
+        moving.setPhase(.movement)
+
+        #expect(CityConstructionRules.demolish(buildingTypeID: "market", in: "capital", for: "crown", world: moving) == .failure(.invalidPhase(.movement)))
+        #expect(CityConstructionRules.demolish(buildingTypeID: "market", in: "capital", for: "union", world: built.world) == .failure(.cityNotOwned("capital")))
+        #expect(CityConstructionRules.demolish(buildingTypeID: "town-hall", in: "capital", for: "crown", world: built.world) == .failure(.notBuilt("town-hall")))
+    }
+
     private let players = [WorldPlayer(id: "crown", displayName: "Crown"), WorldPlayer(id: "union", displayName: "Union")]
     private let levels = [
         CityLevelDefinition(id: "village", displayName: "Village", baseIncome: 4, buildingSlots: 1, upgradeCost: 0),

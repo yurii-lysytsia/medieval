@@ -10,6 +10,7 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
     case asymmetricNeighborhood(hexID: HexID, neighborHexID: HexID)
     case unsuitableCityPlacement(hexID: HexID, terrainID: TerrainID)
     case invalidRiverBoundary(id: String, firstHexID: HexID, secondHexID: HexID)
+    case unreachableCityLevel(levelID: CityLevelID, required: Int, slots: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -31,6 +32,8 @@ public enum GameContentValidationError: Error, Equatable, LocalizedError, Sendab
             "City cannot be placed on hex \"\(hexID.rawValue)\" with terrain \"\(terrainID.rawValue)\"."
         case let .invalidRiverBoundary(id, firstHexID, secondHexID):
             "River boundary \"\(id)\" must connect neighboring hexes, but \"\(firstHexID.rawValue)\" and \"\(secondHexID.rawValue)\" do not share a border."
+        case let .unreachableCityLevel(levelID, required, slots):
+            "City level \"\(levelID.rawValue)\" needs \(required) buildings, but the level below it holds only \(slots)."
         }
     }
 }
@@ -117,6 +120,20 @@ public enum GameContentValidator {
         for level in configuration.cityLevels {
             for buildingID in level.requiredBuildingIDs {
                 try validateReference(buildingID, in: buildingTypeIDs, entity: "city level", id: level.id.rawValue, reference: "required building")
+            }
+        }
+
+        // An upgrade is bought from the level below it, so its requirements have
+        // to fit in that level's slots. Content that asks for more buildings
+        // than the previous level can hold describes a city that can never grow.
+        for (index, level) in configuration.cityLevels.enumerated() where index > 0 {
+            let previous = configuration.cityLevels[index - 1]
+            guard level.requiredBuildingIDs.count <= previous.buildingSlots else {
+                throw GameContentValidationError.unreachableCityLevel(
+                    levelID: level.id,
+                    required: level.requiredBuildingIDs.count,
+                    slots: previous.buildingSlots
+                )
             }
         }
 

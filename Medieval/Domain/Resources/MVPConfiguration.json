@@ -136,11 +136,10 @@
       "id": "village",
       "displayName": "Village",
       "baseIncome": 4,
-      "buildingSlots": 1,
+      "buildingSlots": 2,
       "recruitmentLimit": 1,
       "upgradeCost": 0,
-      "requiredBuildingIDs": [],
-      "recruitmentLimit": 1
+      "requiredBuildingIDs": []
     },
     {
       "id": "town",
@@ -151,14 +150,13 @@
       "upgradeCost": 100,
       "requiredBuildingIDs": [
         "town-hall"
-      ],
-      "recruitmentLimit": 2
+      ]
     },
     {
       "id": "city",
       "displayName": "City",
       "baseIncome": 14,
-      "buildingSlots": 4,
+      "buildingSlots": 6,
       "recruitmentLimit": 3,
       "upgradeCost": 220,
       "requiredBuildingIDs": [
@@ -166,8 +164,7 @@
         "barracks",
         "market",
         "walls"
-      ],
-      "recruitmentLimit": 3
+      ]
     }
   ],
   "buildings": [

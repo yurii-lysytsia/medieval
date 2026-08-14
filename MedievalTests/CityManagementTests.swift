@@ -14,7 +14,9 @@ struct CityManagementTests {
         #expect(panel.income == 6)
         #expect(panel.usedBuildingSlots == 1)
         #expect(panel.buildingSlots == 2)
-        #expect(panel.built == ["Barracks"])
+        #expect(panel.built.map(\.name) == ["Barracks"])
+        // What stands can be pulled down again to free the slot.
+        #expect(panel.built.first?.isEnabled == true)
         #expect(panel.recruitedThisTurn == 0)
         #expect(panel.recruitmentLimit == 1)
         #expect(panel.buildings.map(\.name) == ["Town Hall"])

@@ -286,6 +286,27 @@ struct GameScreen: View {
         }
 
         if city.isCommandable, game.state.phase == .construction {
+            if !city.built.isEmpty {
+                Divider()
+                Text("Побудовано").font(.headline)
+                // Pulling a building down is how a city with its slots filled by
+                // the wrong things gets a second chance; nothing is refunded.
+                ForEach(city.built) { option in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(option.name)
+                            Spacer(minLength: 8)
+                            Button("Знести") { game.demolish(BuildingTypeID(rawValue: option.id), in: city.cityID) }
+                                .disabled(!option.isEnabled)
+                        }
+                        Text(option.disabledReason ?? option.detail)
+                            .font(.caption)
+                            .foregroundStyle(option.isEnabled ? .secondary : Color.orange)
+                    }
+                    .padding(.bottom, 2)
+                }
+            }
+
             Divider()
             Text("Будівництво").font(.headline)
             if city.buildings.isEmpty {

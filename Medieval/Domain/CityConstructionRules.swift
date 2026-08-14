@@ -10,6 +10,7 @@ public enum CityConstructionError: Error, Equatable, LocalizedError, Sendable {
     case noNextLevel(CityID)
     case unknownCityLevel(CityLevelID)
     case unmetRequirements([BuildingTypeID])
+    case notBuilt(BuildingTypeID)
 
     public var errorDescription: String? {
         switch self {
@@ -22,6 +23,7 @@ public enum CityConstructionError: Error, Equatable, LocalizedError, Sendable {
         case let .noNextLevel(cityID): "City \"\(cityID.rawValue)\" is already at its highest level."
         case let .unknownCityLevel(levelID): "City level \"\(levelID.rawValue)\" is not defined by the game content."
         case let .unmetRequirements(ids): "Missing required buildings: \(ids.map(\.rawValue).joined(separator: ", "))."
+        case let .notBuilt(typeID): "Building \"\(typeID.rawValue)\" does not stand in this city."
         }
     }
 }
@@ -59,6 +61,33 @@ public enum CityConstructionRules {
         var nextEconomy = economy
         nextEconomy.spend(definition.constructionCost, for: playerID, kind: .construction, source: "building:\(cityID.rawValue):\(buildingTypeID.rawValue)")
         return .success(CityConstructionResult(world: nextWorld, economy: nextEconomy))
+    }
+
+    /// Pulls a building down, freeing its slot. Nothing is refunded.
+    ///
+    /// This is the way out of a dead end, not a way to earn: a city with every
+    /// slot filled by the wrong buildings could otherwise never meet the
+    /// requirements of its next level, and a saved match in that state had no
+    /// future at all.
+    /// Returns only the world: no coins change hands, and a result carrying an
+    /// untouched treasury would invite the caller to write it back for nothing.
+    public static func demolish(
+        buildingTypeID: BuildingTypeID,
+        in cityID: CityID,
+        for playerID: WorldPlayerID,
+        world: WorldState
+    ) -> Result<WorldState, CityConstructionError> {
+        guard world.phase == .construction else { return .failure(.invalidPhase(world.phase)) }
+        guard world.cities.contains(where: { $0.id == cityID && $0.ownerID == playerID }) else {
+            return .failure(.cityNotOwned(cityID))
+        }
+        guard let building = world.buildings.first(where: { $0.cityID == cityID && $0.typeID == buildingTypeID }) else {
+            return .failure(.notBuilt(buildingTypeID))
+        }
+
+        var nextWorld = world
+        nextWorld.removeBuilding(building.id)
+        return .success(nextWorld)
     }
 
     public static func upgrade(

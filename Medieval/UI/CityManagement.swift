@@ -32,7 +32,10 @@ public struct CityManagement: Equatable, Sendable {
     public let buildingSlots: Int
     public let recruitedThisTurn: Int
     public let recruitmentLimit: Int
-    public let built: [String]
+    /// What already stands here, each with the reason it cannot be pulled down
+    /// if it cannot. Carries the building's type id, so the panel can act on a
+    /// row without looking the name back up.
+    public let built: [CityActionOption]
     public let garrison: [UnitInspection]
     public let buildings: [CityActionOption]
     public let upgrade: CityActionOption?
@@ -71,11 +74,27 @@ public struct CityManagement: Equatable, Sendable {
         // Only the player holding the city is offered anything: for anyone else
         // every rule would fail on ownership, and a list of identical refusals
         // is noise.
+        let standing: [CityActionOption]
         let buildings: [CityActionOption]
         let upgrade: CityActionOption?
         let recruits: [CityActionOption]
         if isCommandable, let playerID = activePlayerID {
             let builtIDs = Set(built.map(\.typeID))
+            standing = builtDefinitions.map { definition in
+                CityActionOption(
+                    id: definition.id.rawValue,
+                    name: definition.displayName,
+                    cost: 0,
+                    detail: buildingDetail(definition),
+                    disabledReason: demolitionReason(
+                        buildingTypeID: definition.id,
+                        cityID: cityID,
+                        playerID: playerID,
+                        world: world,
+                        content: content
+                    )
+                )
+            }
             buildings = content.buildings
                 .filter { !builtIDs.contains($0.id) }
                 .map { definition in
@@ -120,6 +139,18 @@ public struct CityManagement: Equatable, Sendable {
                 )
             }
         } else {
+            // Someone else's city is described, never acted on: every rule
+            // would refuse on ownership, and a list of identical refusals is
+            // noise. The buildings are still named, without a demolish offer.
+            standing = builtDefinitions.map { definition in
+                CityActionOption(
+                    id: definition.id.rawValue,
+                    name: definition.displayName,
+                    cost: 0,
+                    detail: buildingDetail(definition),
+                    disabledReason: RuleWording.text(for: CityConstructionError.cityNotOwned(cityID), content: content)
+                )
+            }
             buildings = []
             upgrade = nil
             recruits = []
@@ -137,7 +168,7 @@ public struct CityManagement: Equatable, Sendable {
             buildingSlots: level?.buildingSlots ?? 0,
             recruitedThisTurn: ledger.recruited(in: cityID),
             recruitmentLimit: level?.recruitmentLimit ?? 0,
-            built: builtDefinitions.map(\.displayName),
+            built: standing,
             garrison: garrison,
             buildings: buildings,
             upgrade: upgrade,
@@ -174,6 +205,25 @@ public struct CityManagement: Equatable, Sendable {
             detail: "дохід \(next.baseIncome) · слотів \(next.buildingSlots) · найм \(next.recruitmentLimit)",
             disabledReason: disabledReason
         )
+    }
+
+    private static func demolitionReason(
+        buildingTypeID: BuildingTypeID,
+        cityID: CityID,
+        playerID: WorldPlayerID,
+        world: WorldState,
+        content: GameContentConfiguration
+    ) -> String? {
+        let result = CityConstructionRules.demolish(
+            buildingTypeID: buildingTypeID,
+            in: cityID,
+            for: playerID,
+            world: world
+        )
+        return switch result {
+        case .success: nil
+        case let .failure(error): RuleWording.text(for: error, content: content)
+        }
     }
 
     private static func constructionReason(

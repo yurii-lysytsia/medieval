@@ -380,6 +380,10 @@ public struct WorldState: Codable, Equatable, Sendable {
         buildings.append(building)
     }
 
+    mutating func removeBuilding(_ buildingID: BuildingID) {
+        buildings.removeAll { $0.id == buildingID }
+    }
+
     mutating func setCityLevel(_ levelID: CityLevelID, for cityID: CityID) {
         guard let index = cities.firstIndex(where: { $0.id == cityID }) else { return }
         let city = cities[index]

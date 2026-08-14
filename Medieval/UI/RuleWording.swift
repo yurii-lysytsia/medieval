@@ -19,6 +19,7 @@ enum RuleWording {
         case .noBuildingSlots: "Немає вільних слотів"
         case let .insufficientCoins(required): "Потрібно \(required) монет"
         case .noNextLevel: "Максимальний рівень"
+        case .notBuilt: "Такої будівлі тут немає"
         case let .unmetRequirements(ids): "Потрібно: \(names(ids, content: content))"
         }
     }
