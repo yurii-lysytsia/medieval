@@ -31,6 +31,17 @@ struct MapCamera: Equatable {
         min(max(value, minimumZoom), maximumZoom)
     }
 
+    /// How far the map moves for a trackpad scroll.
+    ///
+    /// `NSEvent` measures scrolling deltas with y growing downwards, and a
+    /// SpriteKit scene has y growing upwards, so the vertical delta has to be
+    /// turned round: added as it comes, two fingers moving down sent the map up,
+    /// against both the fingers and a mouse drag. The horizontal axis agrees
+    /// between the two and is passed through.
+    static func panTranslation(scrollingDeltaX: CGFloat, scrollingDeltaY: CGFloat) -> CGVector {
+        CGVector(dx: scrollingDeltaX, dy: -scrollingDeltaY)
+    }
+
     /// Keeps the map over the viewport: it may be dragged until an edge reaches
     /// the corresponding edge of the visible area, and no further. A map smaller
     /// than the viewport ignores the drag entirely and stays centred, because

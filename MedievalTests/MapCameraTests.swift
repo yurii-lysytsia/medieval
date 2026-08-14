@@ -53,6 +53,19 @@ struct MapCameraTests {
         #expect(small == 1)
     }
 
+    /// The map follows the fingers. AppKit hands over scroll deltas measured
+    /// with y downwards while the scene has y upwards, so the vertical one is
+    /// turned round and the horizontal one is not.
+    @Test func panningFollowsTheFingersOnBothAxes() {
+        let fingersDown = MapCamera.panTranslation(scrollingDeltaX: 0, scrollingDeltaY: 12)
+        let fingersUp = MapCamera.panTranslation(scrollingDeltaX: 0, scrollingDeltaY: -12)
+        let fingersRight = MapCamera.panTranslation(scrollingDeltaX: 9, scrollingDeltaY: 0)
+
+        #expect(fingersDown.dy == -12)
+        #expect(fingersUp.dy == 12)
+        #expect(fingersRight.dx == 9)
+    }
+
     @Test func keepsZoomWithinItsLimits() {
         #expect(MapCamera.clampZoom(0.001) == MapCamera.minimumZoom)
         #expect(MapCamera.clampZoom(40) == MapCamera.maximumZoom)

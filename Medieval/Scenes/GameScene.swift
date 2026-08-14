@@ -114,9 +114,13 @@ final class GameScene: SKScene {
         if event.hasPreciseScrollingDeltas,
            !event.modifierFlags.contains(.command)
         {
+            let translation = MapCamera.panTranslation(
+                scrollingDeltaX: event.scrollingDeltaX,
+                scrollingDeltaY: event.scrollingDeltaY
+            )
             mapContainer.position = CGPoint(
-                x: mapContainer.position.x + event.scrollingDeltaX,
-                y: mapContainer.position.y + event.scrollingDeltaY
+                x: mapContainer.position.x + translation.dx,
+                y: mapContainer.position.y + translation.dy
             )
             clampMapPosition()
             return
