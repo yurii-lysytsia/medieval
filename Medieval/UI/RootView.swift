@@ -275,6 +275,14 @@ struct GameScreen: View {
         Text("Найм цього ходу: \(city.recruitedThisTurn)/\(city.recruitmentLimit)")
         if !city.garrison.isEmpty {
             Text("Гарнізон: \(city.garrison.map { "\($0.name) \($0.hitPoints) HP" }.joined(separator: ", "))")
+            // A recruit is inside the city until it is marched out, and only
+            // then is there anything on the map to give orders to.
+            if city.isCommandable, game.state.phase == .movement {
+                Button("Вивести гарнізон (\(city.garrison.count))") {
+                    game.deployGarrison(from: city.cityID)
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
 
         if city.isCommandable, game.state.phase == .construction {

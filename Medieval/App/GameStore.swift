@@ -252,6 +252,62 @@ final class GameStore: ObservableObject {
         scheduleAutosave()
     }
 
+    /// Marches the garrison out of the city and onto its hex, where it becomes
+    /// an army that can be given orders.
+    ///
+    /// Recruits are held inside the city, and until they leave it there is
+    /// nothing on the map to select: this is the only way an army comes into
+    /// existence — no scenario starts with one. Units joining a force that is
+    /// already standing on the city merge into it rather than founding a second
+    /// army on the same hex, which would leave the two competing to be the one
+    /// the map selects.
+    func deployGarrison(from cityID: CityID) {
+        guard let playerID = state.activePlayer.worldPlayerID,
+              let city = world.cities.first(where: { $0.id == cityID }),
+              city.ownerID == playerID
+        else { return }
+        let unitIDs = world.units
+            .filter { $0.location == .garrison(cityID) && $0.condition != .destroyed && $0.ownerID == playerID }
+            .map(\.id)
+        guard !unitIDs.isEmpty else { return }
+
+        // Named after the first unit: unit numbers are handed out once and never
+        // reused, and a unit belongs to at most one army, so no live army can
+        // already carry this id.
+        let armyID = ArmyID(rawValue: "army-\(unitIDs[0].rawValue)")
+        let formed = ArmyOperations.formArmy(
+            id: armyID,
+            ownerID: playerID,
+            unitIDs: unitIDs,
+            world: world,
+            map: content.scenario.map,
+            definitions: content.units
+        )
+        guard case let .success(worldWithArmy) = formed else {
+            if case let .failure(error) = formed { present(error) }
+            return
+        }
+
+        guard let standing = world.armies.first(where: { $0.hexID == city.hexID && $0.ownerID == playerID }) else {
+            world = worldWithArmy
+            present("Гарнізон виведено: \(unitIDs.count) юнітів у полі.", severity: .success)
+            selectHex(city.hexID)
+            scheduleAutosave()
+            return
+        }
+        let merged = ArmyOperations.merge(armyID, into: standing.id, world: worldWithArmy)
+        guard case let .success(nextWorld) = merged else {
+            // The units stay in the garrison: a half-done sortie that left them
+            // in a second army on the same hex would be worse than none.
+            if case let .failure(error) = merged { present(error) }
+            return
+        }
+        world = nextWorld
+        present("Гарнізон приєднано до армії: +\(unitIDs.count) юнітів.", severity: .success)
+        selectHex(city.hexID)
+        scheduleAutosave()
+    }
+
     private func buildingName(_ id: BuildingTypeID) -> String {
         content.buildings.first(where: { $0.id == id })?.displayName ?? id.rawValue
     }
@@ -260,11 +316,15 @@ final class GameStore: ObservableObject {
     /// `LocalizedError` text is written for a developer reading a log, so the
     /// panel's wording is reused here rather than shown raw.
     private func present(_ error: CityConstructionError) {
-        present(CityManagement.wording(for: error, content: content), severity: .error)
+        present(RuleWording.text(for: error, content: content), severity: .error)
     }
 
     private func present(_ error: RecruitmentError) {
-        present(CityManagement.wording(for: error, content: content), severity: .error)
+        present(RuleWording.text(for: error, content: content), severity: .error)
+    }
+
+    private func present(_ error: ArmyOperationError) {
+        present(RuleWording.text(for: error, content: content), severity: .error)
     }
 
     func resetMapCamera() {

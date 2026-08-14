@@ -91,6 +91,59 @@ struct GameStoreCityTests {
         #expect(store.recruitment.recruited(in: "capital") == 0)
     }
 
+    @Test func theGarrisonMarchesOutAsAnArmyOnTheCityHex() throws {
+        let store = makeStore()
+        store.recruit("infantry", in: "capital")
+        store.advancePhase() // movement
+
+        store.deployGarrison(from: "capital")
+
+        let army = try #require(store.world.armies.first)
+        #expect(army.hexID == "home")
+        #expect(army.ownerID == "crown")
+        #expect(army.unitIDs.count == 1)
+        #expect(store.world.units.allSatisfy { $0.location == .hex("home") })
+        #expect(store.selectedHexID == "home")
+    }
+
+    /// A second sortie joins the force already standing there. Two armies on
+    /// one hex would leave the map picking whichever came first.
+    @Test func asecondSortieJoinsTheArmyAlreadyOnTheHex() throws {
+        let store = makeStore()
+        store.recruit("infantry", in: "capital")
+        store.advancePhase()
+        store.deployGarrison(from: "capital")
+        let firstArmyID = try #require(store.world.armies.first?.id)
+
+        // Next turn: recruit again, then march the new unit out.
+        store.advancePhase()
+        store.endTurn()
+        store.confirmHandoff()
+        store.advancePhase()
+        store.advancePhase()
+        store.advancePhase()
+        store.endTurn()
+        store.confirmHandoff()
+        store.advancePhase() // construction
+        store.recruit("infantry", in: "capital")
+        store.advancePhase() // movement
+        store.deployGarrison(from: "capital")
+
+        #expect(store.world.armies.count == 1)
+        #expect(store.world.armies.first?.id == firstArmyID)
+        #expect(store.world.armies.first?.unitIDs.count == 2)
+    }
+
+    @Test func deployingOutsideTheMovementPhaseIsRefusedWithAReason() {
+        let store = makeStore()
+        store.recruit("infantry", in: "capital")
+
+        store.deployGarrison(from: "capital")
+
+        #expect(store.world.armies.isEmpty)
+        #expect(store.criticalNotice?.text == "Лише у фазі руху")
+    }
+
     private func cityPanel(_ store: GameStore) -> CityManagement? {
         CityManagement.inspect(
             cityID: "capital",

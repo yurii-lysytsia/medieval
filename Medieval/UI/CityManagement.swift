@@ -165,7 +165,7 @@ public struct CityManagement: Equatable, Sendable {
         )
         let disabledReason: String? = switch result {
         case .success: nil
-        case let .failure(error): wording(for: error, content: content)
+        case let .failure(error): RuleWording.text(for: error, content: content)
         }
         return CityActionOption(
             id: next.id.rawValue,
@@ -195,7 +195,7 @@ public struct CityManagement: Equatable, Sendable {
         )
         return switch result {
         case .success: nil
-        case let .failure(error): wording(for: error, content: content)
+        case let .failure(error): RuleWording.text(for: error, content: content)
         }
     }
 
@@ -223,43 +223,8 @@ public struct CityManagement: Equatable, Sendable {
         )
         return switch result {
         case .success: nil
-        case let .failure(error): wording(for: error, content: content)
+        case let .failure(error): RuleWording.text(for: error, content: content)
         }
-    }
-
-    /// The domain reports what went wrong; the wording is the interface's, in
-    /// the one language the game speaks. Shared with the store so a refused
-    /// action and a disabled button say the same thing.
-    static func wording(for error: CityConstructionError, content: GameContentConfiguration) -> String {
-        switch error {
-        case .invalidPhase: "Лише у фазі будівництва"
-        case .cityNotOwned: "Місто не ваше"
-        case .unknownBuilding, .unknownCityLevel: "Невідомо в контенті гри"
-        case .alreadyBuilt: "Уже побудовано"
-        case .noBuildingSlots: "Немає вільних слотів"
-        case let .insufficientCoins(required): "Потрібно \(required) монет"
-        case .noNextLevel: "Максимальний рівень"
-        case let .unmetRequirements(ids): "Потрібно: \(names(ids, content: content))"
-        }
-    }
-
-    static func wording(for error: RecruitmentError, content _: GameContentConfiguration) -> String {
-        switch error {
-        case .invalidPhase: "Лише у фазі найму"
-        case .cityNotOwned: "Місто не ваше"
-        case .barracksRequired: "Потрібні казарми"
-        case .unknownUnitType, .unknownCityLevel: "Невідомо в контенті гри"
-        case .navalUnitRequiresPort: "Потрібен вихід до води"
-        case let .recruitmentLimitReached(_, limit): "Ліміт найму за хід: \(limit)"
-        case let .garrisonFull(_, limit): "Гарнізон заповнений (\(limit))"
-        case let .insufficientCoins(required): "Потрібно \(required) монет"
-        }
-    }
-
-    private static func names(_ ids: [BuildingTypeID], content: GameContentConfiguration) -> String {
-        ids
-            .map { id in content.buildings.first(where: { $0.id == id })?.displayName ?? id.rawValue }
-            .joined(separator: ", ")
     }
 
     private static func buildingDetail(_ definition: BuildingDefinition) -> String {
